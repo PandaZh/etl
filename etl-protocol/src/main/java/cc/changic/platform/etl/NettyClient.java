@@ -28,8 +28,7 @@ public class NettyClient {
         }
     }
 
-    public static class ChildChannelHandler extends
-            ChannelInitializer<SocketChannel> {
+    public static class ChildChannelHandler extends ChannelInitializer<SocketChannel> {
 
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {

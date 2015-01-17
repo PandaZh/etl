@@ -7,6 +7,15 @@ public class NettyMessage {
     private Header header;
     private Object body;
 
+    public NettyMessage() {
+
+    }
+
+    public NettyMessage(Header header, Object body) {
+        this.header = header;
+        this.body = body;
+    }
+
     public Header getHeader() {
         return header;
     }
