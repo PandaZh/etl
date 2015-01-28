@@ -1,4 +1,4 @@
-package cc.changic.platform.etl;
+package cc.changic.platform.etl.protocol.codec.marshalling;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -8,13 +8,13 @@ import io.netty.handler.codec.marshalling.UnmarshallerProvider;
 /**
  * Created by Panda.Z on 2015/1/17.
  */
-public class NettyMarshallingDecoder extends MarshallingDecoder {
+public class ETLMarshallingDecoder extends MarshallingDecoder {
 
-    public NettyMarshallingDecoder(UnmarshallerProvider provider) {
+    public ETLMarshallingDecoder(UnmarshallerProvider provider) {
         super(provider);
     }
 
-    public NettyMarshallingDecoder(UnmarshallerProvider provider, int maxObjectSize) {
+    public ETLMarshallingDecoder(UnmarshallerProvider provider, int maxObjectSize) {
         super(provider, maxObjectSize);
     }
 

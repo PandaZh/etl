@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+               http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+               http://www.springframework.org/schema/context
+               http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+
+	<context:component-scan base-package="cc.changic.platform" />
+
+    <bean id="etlServer" class="cc.changic.platform.etl.terminal.ETLServer">
+        <constructor-arg name="port" value="9994"/>
+    </bean>
+
+    <bean class="io.netty.handler.logging.LoggingHandler">
+        <constructor-arg name="level" >
+            <ref bean="logLevel"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="logLevel" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+        <property name="staticField" value="io.netty.handler.logging.LogLevel.DEBUG" />
+    </bean>
+
+    <bean class="cc.changic.platform.etl.protocol.codec.marshalling.MarshallingCodecFactory">
+        <constructor-arg name="factoryName" value="serial"/>
+        <constructor-arg name="version" value="5"/>
+        <constructor-arg name="maxObjectSize" value="32767"/>
+    </bean>
+
+    <bean class="cc.changic.platform.etl.protocol.stream.ChunkDataConfiguration">
+        <property name="chunkSize" value="2097152"/>
+    </bean>
+</beans>

@@ -1,4 +1,4 @@
-package cc.changic.platform.etl;
+package test;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -16,8 +16,7 @@ public class NettyClient {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
-            b.group(workerGroup)
-                    .channel(NioSocketChannel.class)
+            b.group(workerGroup).channel(NioSocketChannel.class)
                     .handler(new ChildChannelHandler());
 
             ChannelFuture f = b.connect(remoteServer, port).sync();

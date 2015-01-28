@@ -1,4 +1,4 @@
-package cc.changic.platform.etl;
+package test;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -11,6 +11,7 @@ public class LoginAuthRespHandler extends ChannelInboundHandlerAdapter {
 
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
+
         NettyMessage message = (NettyMessage) msg;
         if (message.getHeader() != null && message.getHeader().getType() == (byte) 1) {
             System.out.println("Login is OK");
@@ -26,10 +27,12 @@ public class LoginAuthRespHandler extends ChannelInboundHandlerAdapter {
         header.setType((byte) 2);
         message.setHeader(header);
         message.setBody(result);
+
         return message;
     }
 
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+
         ctx.flush();
     }
 

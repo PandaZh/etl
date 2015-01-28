@@ -1,4 +1,4 @@
-package cc.changic.platform.etl;
+package test;
 
 import com.google.common.collect.Maps;
 
@@ -13,6 +13,7 @@ public class Header {
     private long sessionID;
     private byte type;
     private byte priority;
+
     private Map<String, Object> attachment = Maps.newHashMap();
 
     public int getCrcCode() {

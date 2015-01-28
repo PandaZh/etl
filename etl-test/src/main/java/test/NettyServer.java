@@ -1,4 +1,4 @@
-package cc.changic.platform.etl;
+package test;
 
 
 import io.netty.bootstrap.ServerBootstrap;
