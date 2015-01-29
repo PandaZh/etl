@@ -27,14 +27,14 @@ public class ETLChunkedFile implements ChunkedInput<ByteBuf> {
      * @param file      附件文件
      * @throws IOException
      */
-    public ETLChunkedFile(ByteBuf headerBuf, RandomAccessFile file, ChunkDataConfiguration configuration) throws IOException {
+    public ETLChunkedFile(ByteBuf headerBuf, RandomAccessFile file) throws IOException {
         if (null == headerBuf) {
             throw new NullPointerException("headerBuf");
         }
         if (file == null) {
             throw new NullPointerException("file");
         }
-        chunkSize = configuration.getChunkSize();
+        chunkSize = ChunkDataConfiguration.getChunkSize();
         this.headerBuf = headerBuf;
         this.file = file;
         offset = startOffset = 0;

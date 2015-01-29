@@ -5,13 +5,13 @@ package cc.changic.platform.etl.protocol.stream;
  */
 public class ChunkDataConfiguration {
 
-    private int chunkSize = 1024 * 1024;
+    private static int CHUNK_SIZE = 1024 * 1024;
 
-    public int getChunkSize() {
-        return chunkSize;
+    public static int getChunkSize() {
+        return CHUNK_SIZE;
     }
 
     public void setChunkSize(int chunkSize) {
-        this.chunkSize = chunkSize;
+        CHUNK_SIZE = chunkSize;
     }
 }
