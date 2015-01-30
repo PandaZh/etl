@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.changic.platform.etl.base.dao.ODSConfigMapper">
+  <resultMap id="BaseResultMap" type="cc.changic.platform.etl.base.model.db.ODSConfig">
+        
+        <id column="id" jdbcType="INTEGER" property="id" />
+        <result column="ods_name" jdbcType="VARCHAR" property="odsName" />
+        <result column="ods_ip" jdbcType="VARCHAR" property="odsIp" />
+        <result column="ods_port" jdbcType="SMALLINT" property="odsPort" />
+        <result column="ods_schema" jdbcType="VARCHAR" property="odsSchema" />
+        <result column="ods_user" jdbcType="VARCHAR" property="odsUser" />
+        <result column="ods_pwd" jdbcType="VARCHAR" property="odsPwd" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        
+        id, ods_name, ods_ip, ods_port, ods_schema, ods_user, ods_pwd
+    </sql>
+    <select id="selectAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from db_etl_server_0001.t_c_ods_config
+    </select>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        
+        select
+        <include refid="Base_Column_List" />
+        from db_etl_server_0001.t_c_ods_config
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        
+        delete from db_etl_server_0001.t_c_ods_config
+        where id = #{id,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="cc.changic.platform.etl.base.model.db.ODSConfig">
+        
+        insert into db_etl_server_0001.t_c_ods_config (id, ods_name, ods_ip,
+        ods_port, ods_schema, ods_user,
+        ods_pwd)
+        values (#{id,jdbcType=INTEGER}, #{odsName,jdbcType=VARCHAR}, #{odsIp,jdbcType=VARCHAR},
+        #{odsPort,jdbcType=SMALLINT}, #{odsSchema,jdbcType=VARCHAR}, #{odsUser,jdbcType=VARCHAR},
+        #{odsPwd,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insertSelective" parameterType="cc.changic.platform.etl.base.model.db.ODSConfig">
+        
+        insert into db_etl_server_0001.t_c_ods_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="odsName != null">
+                ods_name,
+            </if>
+            <if test="odsIp != null">
+                ods_ip,
+            </if>
+            <if test="odsPort != null">
+                ods_port,
+            </if>
+            <if test="odsSchema != null">
+                ods_schema,
+            </if>
+            <if test="odsUser != null">
+                ods_user,
+            </if>
+            <if test="odsPwd != null">
+                ods_pwd,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="odsName != null">
+                #{odsName,jdbcType=VARCHAR},
+            </if>
+            <if test="odsIp != null">
+                #{odsIp,jdbcType=VARCHAR},
+            </if>
+            <if test="odsPort != null">
+                #{odsPort,jdbcType=SMALLINT},
+            </if>
+            <if test="odsSchema != null">
+                #{odsSchema,jdbcType=VARCHAR},
+            </if>
+            <if test="odsUser != null">
+                #{odsUser,jdbcType=VARCHAR},
+            </if>
+            <if test="odsPwd != null">
+                #{odsPwd,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cc.changic.platform.etl.base.model.db.ODSConfig">
+        
+        update db_etl_server_0001.t_c_ods_config
+        <set>
+            <if test="odsName != null">
+                ods_name = #{odsName,jdbcType=VARCHAR},
+            </if>
+            <if test="odsIp != null">
+                ods_ip = #{odsIp,jdbcType=VARCHAR},
+            </if>
+            <if test="odsPort != null">
+                ods_port = #{odsPort,jdbcType=SMALLINT},
+            </if>
+            <if test="odsSchema != null">
+                ods_schema = #{odsSchema,jdbcType=VARCHAR},
+            </if>
+            <if test="odsUser != null">
+                ods_user = #{odsUser,jdbcType=VARCHAR},
+            </if>
+            <if test="odsPwd != null">
+                ods_pwd = #{odsPwd,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cc.changic.platform.etl.base.model.db.ODSConfig">
+        
+        update db_etl_server_0001.t_c_ods_config
+        set ods_name = #{odsName,jdbcType=VARCHAR},
+        ods_ip = #{odsIp,jdbcType=VARCHAR},
+        ods_port = #{odsPort,jdbcType=SMALLINT},
+        ods_schema = #{odsSchema,jdbcType=VARCHAR},
+        ods_user = #{odsUser,jdbcType=VARCHAR},
+        ods_pwd = #{odsPwd,jdbcType=VARCHAR}
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+</mapper>

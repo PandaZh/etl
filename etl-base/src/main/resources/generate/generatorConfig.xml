@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration>
+    <classPathEntry location="F:\GitHub\etl\etl-base\src\main\resources\generate\postgresql-9.3-1102-jdbc41.jar"/>
+
+    <context id="context1">
+        <jdbcConnection userId="gp_user"
+                        password="123456"
+                        driverClass="org.postgresql.Driver"
+                        connectionURL="jdbc:postgresql://192.168.50.195:3433/db_etl_server"/>
+
+        <!-- 生成模型的包名和位置-->
+        <javaModelGenerator targetPackage="cc.changic.platform.etl.base.model.db"
+                            targetProject="F:\GitHub\etl\etl-base\src\main\java">
+            <property name="enableSubPackages" value="false"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+
+        <!-- 生成映射文件的包名和位置-->
+        <sqlMapGenerator targetPackage="mapper" targetProject="F:\GitHub\etl\etl-base\src\main\resources\"/>
+
+        <!-- 生成DAO的包名和位置-->
+        <javaClientGenerator type="XMLMAPPER"
+                             targetPackage="cc.changic.platform.etl.base.dao"
+                             targetProject="F:\GitHub\etl\etl-base\src\main\java">
+            <property name="enableSubPackages" value="false"/>
+        </javaClientGenerator>
+
+        <!--<table schema="db_etl_server_0001" tableName="t_c_app_config" domainObjectName="App"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
+
+        <!--<table schema="db_etl_server_0001" tableName="t_c_game_zone" domainObjectName="GameZone"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
+
+        <!--<table schema="db_etl_server_0001" tableName="t_c_ods_config" domainObjectName="ODSConfig"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
+
+        <!--<table schema="db_etl_server_0001" tableName="t_c_task_file" domainObjectName="TaskFile"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
+
+        <table schema="db_etl_server_0001" tableName="t_c_job" domainObjectName="Job"
+               enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"
+               enableSelectByExample="false" selectByExampleQueryId="false"/>
+
+        <!--<table schema="db_etl_server_0001" tableName="t_c_job_log" domainObjectName="JobLog"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
+
+
+    </context>
+</generatorConfiguration>

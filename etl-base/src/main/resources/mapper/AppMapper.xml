@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cc.changic.platform.etl.base.dao.AppMapper">
+    <resultMap id="BaseResultMap" type="cc.changic.platform.etl.base.model.db.App">
+
+        <id column="app_id" property="appId" jdbcType="INTEGER"/>
+        <result column="app_name" property="appName" jdbcType="VARCHAR"/>
+        <result column="db_user" property="dbUser" jdbcType="VARCHAR"/>
+        <result column="db_pwd" property="dbPwd" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    
+    app_id, app_name, db_user, db_pwd
+  </sql>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from db_etl_server_0001.t_c_app_config
+    </select>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+
+        select
+        <include refid="Base_Column_List"/>
+        from db_etl_server_0001.t_c_app_config
+        where app_id = #{appId,jdbcType=INTEGER}
+    </select>
+
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    
+    delete from db_etl_server_0001.t_c_app_config
+    where app_id = #{appId,jdbcType=INTEGER}
+  </delete>
+    <insert id="insert" parameterType="cc.changic.platform.etl.base.model.db.App">
+    
+    insert into db_etl_server_0001.t_c_app_config (app_id, app_name, db_user, 
+      db_pwd)
+    values (#{appId,jdbcType=INTEGER}, #{appName,jdbcType=VARCHAR}, #{dbUser,jdbcType=VARCHAR}, 
+      #{dbPwd,jdbcType=VARCHAR})
+  </insert>
+    <insert id="insertSelective" parameterType="cc.changic.platform.etl.base.model.db.App">
+
+        insert into db_etl_server_0001.t_c_app_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="appId != null">
+                app_id,
+            </if>
+            <if test="appName != null">
+                app_name,
+            </if>
+            <if test="dbUser != null">
+                db_user,
+            </if>
+            <if test="dbPwd != null">
+                db_pwd,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="appId != null">
+                #{appId,jdbcType=INTEGER},
+            </if>
+            <if test="appName != null">
+                #{appName,jdbcType=VARCHAR},
+            </if>
+            <if test="dbUser != null">
+                #{dbUser,jdbcType=VARCHAR},
+            </if>
+            <if test="dbPwd != null">
+                #{dbPwd,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cc.changic.platform.etl.base.model.db.App">
+
+        update db_etl_server_0001.t_c_app_config
+        <set>
+            <if test="appName != null">
+                app_name = #{appName,jdbcType=VARCHAR},
+            </if>
+            <if test="dbUser != null">
+                db_user = #{dbUser,jdbcType=VARCHAR},
+            </if>
+            <if test="dbPwd != null">
+                db_pwd = #{dbPwd,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where app_id = #{appId,jdbcType=INTEGER}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cc.changic.platform.etl.base.model.db.App">
+    
+    update db_etl_server_0001.t_c_app_config
+    set app_name = #{appName,jdbcType=VARCHAR},
+      db_user = #{dbUser,jdbcType=VARCHAR},
+      db_pwd = #{dbPwd,jdbcType=VARCHAR}
+    where app_id = #{appId,jdbcType=INTEGER}
+  </update>
+</mapper>
