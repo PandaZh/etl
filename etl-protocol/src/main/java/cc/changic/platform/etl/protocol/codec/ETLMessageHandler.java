@@ -5,6 +5,7 @@ import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
+import cc.changic.platform.etl.protocol.rmi.ETLMessageType;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -16,9 +17,7 @@ import org.springframework.stereotype.Component;
 import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.REQUEST;
 import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.RESPONSE;
 
-/**
- * Created by Panda.Z on 2015/1/22.
- */
+
 @Component
 @ChannelHandler.Sharable
 public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
@@ -41,10 +40,17 @@ public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
         if (header.getMessageType() == REQUEST.type()) {
             DuplexMessage handlerMessage = dispatcher.getMessage(header.getToken());
             handlerMessage.read(ctx, message);
+            message.getHeader().setMessageType(ETLMessageType.RESPONSE.type());
             handlerMessage.write(ctx);
         } else if (header.getMessageType() == RESPONSE.type()) {
             DuplexMessage handlerMessage = getHandlerMessage(ctx, header.getSessionID());
-            handlerMessage.read(ctx, message);
+            if (null != handlerMessage) {
+                handlerMessage.read(ctx, message);
+                if (message.getHeader().isLastPackage())
+                    ctx.close();
+            } else {
+                throw new ETLException("Not found handler message in a response message sessionID=" + header.getSessionID());
+            }
         } else {
             throw new ETLException("Not support message type, typeValue=" + header.getMessageType());
         }
@@ -56,10 +62,9 @@ public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
         ctx.close();
     }
 
-    private DuplexMessage getHandlerMessage(ChannelHandlerContext ctx, Long sessionID){
+    private DuplexMessage getHandlerMessage(ChannelHandlerContext ctx, Long sessionID) {
         AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf(sessionID.toString());
         Attribute<DuplexMessage> attribute = ctx.attr(attributeKey);
-        DuplexMessage duplexMessage = attribute.get();
-        return duplexMessage;
+        return attribute.get();
     }
 }

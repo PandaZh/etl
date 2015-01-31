@@ -2,13 +2,10 @@ package cc.changic.platform.etl.protocol.codec;
 
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.codec.marshalling.ETLMarshallingEncoder;
-import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
 import cc.changic.platform.etl.protocol.message.OutputMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
-import cc.changic.platform.etl.protocol.rmi.ETLMessageAttachment;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
-import cc.changic.platform.etl.protocol.stream.ETLChunkedFile;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
@@ -18,10 +15,8 @@ import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.RandomAccessFile;
 import java.util.List;
 
-import static cc.changic.platform.etl.protocol.rmi.ETLMessageAttachment.AttachType.FILE;
 import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.REQUEST;
 
 /**
@@ -83,25 +78,28 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
             logger.error("Encode body error:{}", e.getMessage(), e);
             throw e;
         }
-
+        ByteBuf chunkHeader = null;
         try {
-            if (null != message.getAttachment()) {
-                ByteBuf chunkedHead = ctx.alloc().buffer(16);
-                chunkedHead.writeShort(header.getToken());
-                chunkedHead.writeLong(header.getSessionID());
-                chunkedHead.writeByte(header.getMessageType());
-                // 是否是最后一个包
-                chunkedHead.writeBoolean(false);
-                // 是否有body,分片附件中不包含消息体,只包含消息头
-                chunkedHead.writeInt(ETLMessageHeader.NO_BODY);
-                // 构造分片附件
-                ChunkedInput attach = msg.getAttach(chunkedHead);
-                out.add(attach);
+            chunkHeader = ctx.alloc().buffer(16);
+            chunkHeader.writeShort(header.getToken());
+            chunkHeader.writeLong(header.getSessionID());
+            chunkHeader.writeByte(header.getMessageType());
+            // 是否是最后一个包
+            chunkHeader.writeBoolean(false);
+            // 是否有body,分片附件中不包含消息体,只包含消息头
+            chunkHeader.writeInt(ETLMessageHeader.NO_BODY);
+            // 构造分片附件
+            ChunkedInput chunkAttach = msg.getChunkAttach(chunkHeader);
+            if (null != chunkAttach) {
+                out.add(chunkAttach);
+            } else {
+                chunkHeader.release();
             }
         } catch (Exception e) {
-            if (null != outBuf) {
+            if (null != chunkHeader)
+                chunkHeader.release();
+            if (null != outBuf)
                 outBuf.setBoolean(11, true);
-            }
             logger.error("Encode attachment error:{}", e.getMessage(), e);
             throw e;
         }

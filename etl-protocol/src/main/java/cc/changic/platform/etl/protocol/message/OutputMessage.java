@@ -22,7 +22,7 @@ public interface OutputMessage extends IoMessage {
      * @param <T>
      * @return
      */
-    <T extends ChunkedInput> T getAttach(ByteBuf chunkHeader);
+    ChunkedInput getChunkAttach(ByteBuf chunkHeader);
 
     /**
      * 写消息

@@ -103,9 +103,6 @@ public class ETLChunkedFile implements ChunkedInput<ByteBuf> {
 
     /**
      * 构建用于附件传输的报头
-     *
-     * @param ctx
-     * @return
      */
     private ByteBuf buildSendHeader(ChannelHandlerContext ctx) {
         // 用于写出的报头

@@ -24,17 +24,17 @@ import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.RESPONSE;
 /**
  * Created by Panda.Z on 2015/1/26.
  */
-@Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-@MessageToken(id = 0x0001)
+//@Component
+//@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+//@MessageToken(id = 0x0001)
 public class ExampleMessageHandler extends DuplexMessage {
 
     private ETLMessage message;
     private RandomAccessFile file;
     public String fileName;
 
-    @Autowired
-    private ChunkDataConfiguration chunkDataConfiguration;
+//    @Autowired(required = false)
+//    private ChunkDataConfiguration chunkDataConfiguration;
 
     @Override
     public ETLMessage getMessage() {
@@ -42,10 +42,10 @@ public class ExampleMessageHandler extends DuplexMessage {
     }
 
     @Override
-    public <T extends ChunkedInput> T getAttach(ByteBuf chunkedHead) {
+    public ChunkedInput getChunkAttach(ByteBuf chunkedHead) {
         RandomAccessFile file = (RandomAccessFile) message.getAttachment().getData();
         try {
-            return (T) new ETLChunkedFile(chunkedHead, file, chunkDataConfiguration);
+            return  new ETLChunkedFile(chunkedHead, file);
         } catch (IOException e) {
             e.printStackTrace();
         }
