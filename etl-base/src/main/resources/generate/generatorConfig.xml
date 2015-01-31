@@ -5,6 +5,12 @@
     <classPathEntry location="F:\GitHub\etl\etl-base\src\main\resources\generate\postgresql-9.3-1102-jdbc41.jar"/>
 
     <context id="context1">
+
+        <commentGenerator>
+            <property name="suppressAllComments" value="false" />
+            <property name="suppressDate" value="true" />
+        </commentGenerator>
+
         <jdbcConnection userId="gp_user"
                         password="123456"
                         driverClass="org.postgresql.Driver"
@@ -39,13 +45,13 @@
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
                <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
-        <!--<table schema="db_etl_server_0001" tableName="t_c_task_file" domainObjectName="TaskFile"-->
-               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
-               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
-
-        <table schema="db_etl_server_0001" tableName="t_c_job" domainObjectName="Job"
+        <table schema="db_etl_server_0001" tableName="t_c_task_file_task" domainObjectName="FileTask"
                enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"
                enableSelectByExample="false" selectByExampleQueryId="false"/>
+
+        <!--<table schema="db_etl_server_0001" tableName="t_c_job" domainObjectName="Job"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
         <!--<table schema="db_etl_server_0001" tableName="t_c_job_log" domainObjectName="JobLog"-->
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->

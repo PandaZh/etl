@@ -39,7 +39,7 @@ public class ConfigCache {
     @Autowired
     private ODSConfigMapper odsConfigMapper;
     @Autowired
-    private TaskFileMapper taskFileMapper;
+    private FileTaskMapper fileTaskMapper;
     @Autowired
     private JobMapper jobMapper;
 
@@ -77,10 +77,10 @@ public class ConfigCache {
         }
 
         // 文件任务类型
-        List<TaskFile> taskFiles = taskFileMapper.selectAll();
-        for (TaskFile taskFile : taskFiles) {
-            ETL_TASK_MAP.put(new ETLTaskKey(taskFile.getTaskId(), taskFile.getTaskTable()), taskFile);
-            logger.info("Cached file_task:{}", taskFile.toString());
+        List<FileTask> taskFiles = fileTaskMapper.selectAll();
+        for (FileTask fileTask : taskFiles) {
+            ETL_TASK_MAP.put(new ETLTaskKey(fileTask.getId(), fileTask.getTaskTable()), fileTask);
+            logger.info("Cached file_task:{}", fileTask.toString());
         }
 
         List<Job> jobs = jobMapper.selectAll();

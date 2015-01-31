@@ -78,7 +78,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.id
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.id
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public Integer getId() {
@@ -90,7 +89,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.id
      *
      * @param id the value for db_etl_server_0001.t_c_game_zone.id
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setId(Integer id) {
@@ -102,7 +100,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.app_id
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.app_id
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public Integer getAppId() {
@@ -114,7 +111,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.app_id
      *
      * @param appId the value for db_etl_server_0001.t_c_game_zone.app_id
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setAppId(Integer appId) {
@@ -126,7 +122,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.game_zone_id
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.game_zone_id
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public Integer getGameZoneId() {
@@ -138,7 +133,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.game_zone_id
      *
      * @param gameZoneId the value for db_etl_server_0001.t_c_game_zone.game_zone_id
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setGameZoneId(Integer gameZoneId) {
@@ -150,7 +144,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.game_zone_name
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.game_zone_name
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public String getGameZoneName() {
@@ -162,7 +155,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.game_zone_name
      *
      * @param gameZoneName the value for db_etl_server_0001.t_c_game_zone.game_zone_name
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setGameZoneName(String gameZoneName) {
@@ -174,7 +166,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.etl_client_ip
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.etl_client_ip
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public String getEtlClientIp() {
@@ -186,7 +177,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.etl_client_ip
      *
      * @param etlClientIp the value for db_etl_server_0001.t_c_game_zone.etl_client_ip
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setEtlClientIp(String etlClientIp) {
@@ -198,7 +188,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.db_ip
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.db_ip
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public String getDbIp() {
@@ -210,7 +199,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.db_ip
      *
      * @param dbIp the value for db_etl_server_0001.t_c_game_zone.db_ip
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setDbIp(String dbIp) {
@@ -222,7 +210,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.db_port
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.db_port
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public Short getDbPort() {
@@ -234,7 +221,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.db_port
      *
      * @param dbPort the value for db_etl_server_0001.t_c_game_zone.db_port
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setDbPort(Short dbPort) {
@@ -246,7 +232,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.timezone
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.timezone
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public Short getTimezone() {
@@ -258,7 +243,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.timezone
      *
      * @param timezone the value for db_etl_server_0001.t_c_game_zone.timezone
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setTimezone(Short timezone) {
@@ -270,7 +254,6 @@ public class GameZone {
      * This method returns the value of the database column db_etl_server_0001.t_c_game_zone.site
      *
      * @return the value of db_etl_server_0001.t_c_game_zone.site
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public String getSite() {
@@ -282,7 +265,6 @@ public class GameZone {
      * This method sets the value of the database column db_etl_server_0001.t_c_game_zone.site
      *
      * @param site the value for db_etl_server_0001.t_c_game_zone.site
-     *
      * @mbggenerated Thu Jan 29 21:23:22 CST 2015
      */
     public void setSite(String site) {
