@@ -1,5 +1,6 @@
 package cc.changic.platform.etl.file.message;
 
+import cc.changic.platform.etl.base.dao.JobMapper;
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
@@ -8,8 +9,10 @@ import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
+import cc.changic.platform.etl.protocol.rmi.ETLMessageAttachment;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
 import cc.changic.platform.etl.protocol.stream.ETLChunkedFile;
+import com.google.common.io.Files;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.stream.ChunkedInput;
@@ -39,8 +42,9 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
 
     private Logger logger = LoggerFactory.getLogger(FullFileTaskMessageHandler.class);
 
-    @Autowired
+    @Autowired(required = false)
     private JobService jobService;
+
     private ExecutableFileJob responseFileJob;
     private ETLMessage message;
     private RandomAccessFile attachFile;
@@ -107,6 +111,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             attachFile = new RandomAccessFile(sourceFile, "r");
         }
         fileJob.setFileName(sourceFile.getName());
+        this.message.setAttachment(new ETLMessageAttachment());
         // TODO md5
     }
 
@@ -116,7 +121,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             // 计算源文件夹
             String sourceDir = fileJob.getSourceDir();
             logger.info("Calculated job source file: job_id={}, source_dir={}", fileJob.getJob().getId(), sourceDir);
-            if (null != fileJob.getJob().getLastRecordTime()) {
+            if (null == fileJob.getJob().getLastRecordTime()) {
                 // 最后记录时间为空时为第一次拉取，获取最老的文件
                 sourceFile = LogFileUtil.getOldestLogFile(sourceDir);
                 if (null == sourceFile) {
@@ -156,6 +161,8 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                         ctx.close();
                         return;
                     }
+                    if (!tmpFile.getParentFile().exists())
+                        Files.createParentDirs(tmpFile);
                     storageFile = new RandomAccessFile(tmpFile, "rw");
                 }
             }

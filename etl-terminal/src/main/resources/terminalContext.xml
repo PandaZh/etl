@@ -11,7 +11,7 @@
 	<context:component-scan base-package="cc.changic.platform" />
 
     <bean id="etlServer" class="cc.changic.platform.etl.terminal.ETLServer">
-        <constructor-arg name="port" value="9994"/>
+        <constructor-arg name="port" value="10000"/>
     </bean>
 
     <bean class="io.netty.handler.logging.LoggingHandler">

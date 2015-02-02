@@ -11,8 +11,22 @@
 
     <context:component-scan base-package="cc.changic.platform"/>
 
-    <bean id="httpServer" class="cc.changic.platform.etl.schedule.http.HttpServer">
-        <constructor-arg name="port" value="8080"/>
+
+    <!--<bean id="httpServer" class="cc.changic.platform.etl.schedule.http.HttpServer">-->
+    <!--<constructor-arg name="port" value="8080"/>-->
+    <!--</bean>-->
+
+    <!-- 调度配置 -->
+    <bean id="schedulerFactory" class="org.quartz.impl.StdSchedulerFactory">
+        <constructor-arg name="fileName" value="quartz.properties"/>
+    </bean>
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:jdbc.properties</value>
+            </list>
+        </property>
     </bean>
 
     <!-- mybatis文件配置，扫描所有mapper文件 -->
@@ -23,10 +37,8 @@
 
     <!--spring与mybatis整合配置，扫描所有dao -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"
-          p:basePackage="cc.changic.platform.etl.schedule.dao"
+          p:basePackage="cc.changic.platform.etl.base.dao"
           p:sqlSessionFactoryBeanName="sqlSessionFactory"/>
-
-    <context:property-placeholder location="classpath:jdbc.properties"/>
 
     <!-- 核心数据源 -->
     <bean id="dataSource" class="com.jolbox.bonecp.BoneCPDataSource"
@@ -43,5 +55,31 @@
         <property name="acquireIncrement" value="5"/>
         <property name="statementsCacheSize" value="100"/>
         <property name="releaseHelperThreads" value="3"/>
+    </bean>
+
+    <!-- netty客户端，用于连接远程服务器拉取数据-->
+    <bean class="cc.changic.platform.etl.schedule.net.Client" scope="prototype">
+        <constructor-arg name="port" value="10000"/>
+    </bean>
+
+    <!-- netty相关配置-->
+    <bean class="io.netty.handler.logging.LoggingHandler">
+        <constructor-arg name="level">
+            <ref bean="logLevel"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="logLevel" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+        <property name="staticField" value="io.netty.handler.logging.LogLevel.DEBUG"/>
+    </bean>
+
+    <bean class="cc.changic.platform.etl.protocol.codec.marshalling.MarshallingCodecFactory">
+        <constructor-arg name="factoryName" value="serial"/>
+        <constructor-arg name="version" value="5"/>
+        <constructor-arg name="maxObjectSize" value="32767"/>
+    </bean>
+
+    <bean class="cc.changic.platform.etl.protocol.stream.ChunkDataConfiguration">
+        <property name="chunkSize" value="2097152"/>
     </bean>
 </beans>

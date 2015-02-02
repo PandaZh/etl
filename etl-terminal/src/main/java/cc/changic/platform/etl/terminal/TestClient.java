@@ -58,7 +58,7 @@ public class TestClient {
                     .handler(messageHandlerInitializer);
 //            for (int i = 0; i < 100; i++) {
                 // Make a new connection.
-                ChannelFuture f = b.connect("127.0.0.1", 9994).sync();
+                ChannelFuture f = b.connect("127.0.0.1", 10000).sync();
 
                 Channel channel = f.channel();
                 ETLMessage message = new ETLMessage();

@@ -1,4 +1,4 @@
-package cc.changic.platform.etl.base.cache;
+package cc.changic.platform.etl.schedule.cache;
 
 
 import cc.changic.platform.etl.base.dao.*;
@@ -20,14 +20,14 @@ import java.util.Map;
 /**
  * ETL配置缓存
  */
-@Component
+@SuppressWarnings("ALL")
 public class ConfigCache {
 
-    private final static Map<Integer, App> APP_MAP = Maps.newHashMap();
-    private final static Map<GameZoneKey, GameZone> GAME_ZONE_MAP = Maps.newHashMap();
-    private final static Map<Integer, ODSConfig> ODS_CONFIG_MAP = Maps.newHashMap();
-    private final static Map<ETLTaskKey, ETLTask> ETL_TASK_MAP = Maps.newHashMap();
-    private final static Map<Integer, Job> JOB_MAP = Maps.newHashMap();
+    private final Map<Integer, App> appMap = Maps.newHashMap();
+    private final Map<GameZoneKey, GameZone> gameZoneMap = Maps.newHashMap();
+    private final Map<Integer, ODSConfig> odsConfigMap = Maps.newHashMap();
+    private final Map<ETLTaskKey, ETLTask> etlTaskMap = Maps.newHashMap();
+    private final Map<Integer, Job> jobMap = Maps.newHashMap();
 
 
     private Logger logger = LoggerFactory.getLogger(ConfigCache.class);
@@ -48,11 +48,11 @@ public class ConfigCache {
     }
 
     public void destroy() {
-        APP_MAP.clear();
-        GAME_ZONE_MAP.clear();
-        ODS_CONFIG_MAP.clear();
-        ETL_TASK_MAP.clear();
-        JOB_MAP.clear();
+        appMap.clear();
+        gameZoneMap.clear();
+        odsConfigMap.clear();
+        etlTaskMap.clear();
+        jobMap.clear();
     }
 
     public boolean caching() {
@@ -60,32 +60,32 @@ public class ConfigCache {
 
         List<App> apps = appMapper.selectAll();
         for (App app : apps) {
-            APP_MAP.put(app.getAppId(), app);
+            appMap.put(app.getAppId(), app);
             logger.info("Cached app:{}", app.toString());
         }
 
         List<GameZone> gameZones = zoneMapper.selectAll();
         for (GameZone gameZone : gameZones) {
-            GAME_ZONE_MAP.put(new GameZoneKey(gameZone.getAppId(), gameZone.getGameZoneId()), gameZone);
+            gameZoneMap.put(new GameZoneKey(gameZone.getAppId(), gameZone.getGameZoneId()), gameZone);
             logger.info("Cached gameZone:{}", gameZone.toString());
         }
 
         List<ODSConfig> odsConfigs = odsConfigMapper.selectAll();
         for (ODSConfig ods : odsConfigs) {
-            ODS_CONFIG_MAP.put(ods.getId(), ods);
+            odsConfigMap.put(ods.getId(), ods);
             logger.info("Cached ODSConfig:{}", ods.toString());
         }
 
         // 文件任务类型
         List<FileTask> taskFiles = fileTaskMapper.selectAll();
         for (FileTask fileTask : taskFiles) {
-            ETL_TASK_MAP.put(new ETLTaskKey(fileTask.getId(), fileTask.getTaskTable()), fileTask);
+            etlTaskMap.put(new ETLTaskKey(fileTask.getId(), fileTask.getTaskTable()), fileTask);
             logger.info("Cached file_task:{}", fileTask.toString());
         }
 
         List<Job> jobs = jobMapper.selectAll();
         for (Job job : jobs) {
-            JOB_MAP.put(job.getId(), job);
+            jobMap.put(job.getId(), job);
             logger.info("Cached job:{}", job.toString());
         }
 
@@ -93,24 +93,24 @@ public class ConfigCache {
         return false;
     }
 
-    public static Map<Integer, App> getAppMap() {
-        return Collections.unmodifiableMap(APP_MAP);
+    public Map<Integer, App> getAppMap() {
+        return Collections.unmodifiableMap(appMap);
     }
 
-    public static Map<GameZoneKey, GameZone> getGameZoneMap() {
-        return Collections.unmodifiableMap(GAME_ZONE_MAP);
+    public Map<GameZoneKey, GameZone> getGameZoneMap() {
+        return Collections.unmodifiableMap(gameZoneMap);
     }
 
-    public static Map<Integer, ODSConfig> getOdsConfigMap() {
-        return Collections.unmodifiableMap(ODS_CONFIG_MAP);
+    public Map<Integer, ODSConfig> getOdsConfigMap() {
+        return Collections.unmodifiableMap(odsConfigMap);
     }
 
-    public static Map<ETLTaskKey, ETLTask> getEtlTaskMap() {
-        return Collections.unmodifiableMap(ETL_TASK_MAP);
+    public Map<ETLTaskKey, ETLTask> getEtlTaskMap() {
+        return Collections.unmodifiableMap(etlTaskMap);
     }
 
-    public static Map<Integer, Job> getJobMap() {
-        return Collections.unmodifiableMap(JOB_MAP);
+    public Map<Integer, Job> getJobMap() {
+        return Collections.unmodifiableMap(jobMap);
     }
 
 

@@ -1,24 +1,20 @@
 package cc.changic.platform.etl.file.execute;
 
-import cc.changic.platform.etl.base.cache.ConfigCache;
-import cc.changic.platform.etl.base.model.ETLTask;
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.model.db.*;
-import cc.changic.platform.etl.base.model.util.ETLTaskKey;
-import cc.changic.platform.etl.base.model.util.GameZoneKey;
 import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
 
-import static cc.changic.platform.etl.file.util.LogFileUtil.*;
+import java.io.Serializable;
+import java.util.Calendar;
+import java.util.Date;
+
+import static cc.changic.platform.etl.file.util.LogFileUtil.getLogFileDir;
+import static cc.changic.platform.etl.file.util.LogFileUtil.getNextLogFileName;
 
 /**
  * 可执行的文件任务
  */
-public class ExecutableFileJob implements ExecutableJob {
-
-    private static Logger logger = LoggerFactory.getLogger(ExecutableFileJob.class);
+public class ExecutableFileJob implements ExecutableJob, Serializable {
 
     // 构造函数数据
     private App app;
@@ -38,6 +34,36 @@ public class ExecutableFileJob implements ExecutableJob {
         this.fileTask = fileTask;
         this.job = job;
         this.odsConfig = odsConfig;
+    }
+
+    @Override
+    public int compareTo(ExecutableJob other) {
+        if (null == other)
+            return 1;
+        if (null == this.getNextTime())
+            return -1;
+        if (null == other.getNextTime())
+            return 1;
+        Calendar thisCalendar = Calendar.getInstance();
+        thisCalendar.setTime(this.getNextTime());
+        Calendar otherCalendar = Calendar.getInstance();
+        otherCalendar.setTime(other.getNextTime());
+        return thisCalendar.compareTo(otherCalendar);
+    }
+
+    @Override
+    public Integer getJobID() {
+        return getJob().getId();
+    }
+
+    @Override
+    public Short getJobType() {
+        return getFileTask().getTaskType();
+    }
+
+    @Override
+    public Date getNextTime() {
+        return null == getJob() ? null : getJob().getNextTime();
     }
 
     public App getApp() {
@@ -76,42 +102,18 @@ public class ExecutableFileJob implements ExecutableJob {
     }
 
     public String getSourceDir() throws NoSuchFieldException, IllegalAccessException {
-        if (Strings.isNullOrEmpty(sourceDir)){
-            sourceDir = getLogFileDir(getFileTask().getSourceDir(), getJob()) ;
+        if (Strings.isNullOrEmpty(sourceDir)) {
+            sourceDir = getLogFileDir(getFileTask().getSourceDir(), getJob());
         }
         return sourceDir;
     }
 
     public String getStorageDir() throws NoSuchFieldException, IllegalAccessException {
-        if (Strings.isNullOrEmpty(storageDir)){
+        if (Strings.isNullOrEmpty(storageDir)) {
             storageDir = getLogFileDir(getFileTask().getStorageDir(), getJob());
         }
         return storageDir;
     }
 
-    public static ExecutableFileJob buildFileJob(Job job) {
-        Assert.notNull(job, "Build File-Job error:[source job is null]");
 
-        App tmpApp = ConfigCache.getAppMap().get(job.getAppId());
-        Assert.notNull(tmpApp, "Build File-Job error:[no app found, app_id=" + job.getAppId() + "]");
-
-        GameZone tmpGameZone = ConfigCache.getGameZoneMap().get(new GameZoneKey(job.getAppId(), job.getGameZoneId()));
-        Assert.notNull(tmpGameZone, "Build File-Job error:[no game_zone found, app_id=" + job.getAppId() + " and game_zone_id=" + job.getGameZoneId() + "]");
-
-        ETLTask tmpTask = ConfigCache.getEtlTaskMap().get(new ETLTaskKey(job.getTaskId(), job.getTaskTable()));
-        Assert.notNull(tmpTask, "Build File-Job error:[no task found, task_id=" + job.getTaskId() + " and task_table=" + job.getTaskTable() + "]");
-        if (!(tmpTask instanceof FileTask)) {
-            logger.warn("Build File-Job warn:[found task, task_id={} and task_table={}, but not instanceof {}", job.getTaskId(), job.getTaskTable(), FileTask.class);
-            return null;
-        }
-
-        FileTask instanceTask = (FileTask) tmpTask;
-        ODSConfig tmpODS = null;
-        if (null != instanceTask.getOdsId() && instanceTask.getOdsId() > 0) {
-            tmpODS = ConfigCache.getOdsConfigMap().get(instanceTask.getOdsId());
-            Assert.notNull(tmpTask, "Build File-Job error:[no ods_config found, task_id=" + job.getTaskId() + " and ods_id=" + instanceTask.getOdsId() + "]");
-        }
-
-        return new ExecutableFileJob(tmpApp, tmpGameZone, instanceTask, job, tmpODS);
-    }
 }

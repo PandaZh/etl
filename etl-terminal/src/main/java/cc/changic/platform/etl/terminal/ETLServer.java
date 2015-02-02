@@ -23,6 +23,7 @@ public class ETLServer {
 
     @Autowired
     private LoggingHandler loggingHandler;
+
     @Autowired
     private ETLMessageHandlerInitializer messageHandlerInitializer;
 
@@ -41,8 +42,8 @@ public class ETLServer {
 
             future.channel().closeFuture().sync();
         } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+//            bossGroup.shutdownGracefully();
+//            workerGroup.shutdownGracefully();
         }
     }
 }

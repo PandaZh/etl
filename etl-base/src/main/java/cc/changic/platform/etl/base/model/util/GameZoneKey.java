@@ -44,4 +44,12 @@ public class GameZoneKey {
         result = 31 * result + (gameZoneID != null ? gameZoneID.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "GameZoneKey{" +
+                "appID=" + appID +
+                ", gameZoneID=" + gameZoneID +
+                '}';
+    }
 }

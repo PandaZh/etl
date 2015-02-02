@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
  * 日志文件工具类
  */
 public class LogFileUtil {
+
     public final static String IDR_REGEX = "\\{(.+?)\\}";
     public final static Pattern DIR_PATTERN = Pattern.compile(IDR_REGEX);
 
