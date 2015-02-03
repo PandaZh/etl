@@ -3,8 +3,8 @@ package cc.changic.platform.etl.schedule.scheduler;
 import cc.changic.platform.etl.base.annotation.TaskTable;
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.model.db.FileTask;
+import cc.changic.platform.etl.base.model.db.GameZoneKey;
 import cc.changic.platform.etl.base.model.db.Job;
-import cc.changic.platform.etl.base.model.util.GameZoneKey;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.exception.ETLException;
@@ -43,7 +43,6 @@ public class ETLSchedulerImpl implements ETLScheduler {
     private Logger logger = LoggerFactory.getLogger(ETLSchedulerImpl.class);
 
     private final ConcurrentMap<GameZoneKey, Queue<ExecutableJob>> queueMap = Maps.newConcurrentMap();
-    private final int maxJobInGameZone = 2;
 
     @Autowired
     private ConfigurableApplicationContext context;
@@ -102,7 +101,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
         cacheJob.setLastRecordTime(job.getLastRecordTime());
         cacheJob.setLastRecordId(job.getLastRecordId());
         cacheJob.setLastRecordOffset(job.getLastRecordOffset());
-
+        // TODO 检查定时器中的任务数
         ExecutableJob executableJob = addJob(job);
         if (null != executableJob) {
             ExecutableJob pollJob = queueMap.get(executableJob.getGameZoneKey()).poll();
@@ -115,9 +114,18 @@ public class ETLSchedulerImpl implements ETLScheduler {
      * 在初始化的时候开始调度任务
      */
     private void scheduleOnInit() {
-        for (Queue<ExecutableJob> queue : queueMap.values()) {
-            for (int i = 0; i < maxJobInGameZone; i++) {
-                ExecutableJob job = queue.poll();
+        for (Map.Entry<GameZoneKey, Queue<ExecutableJob>> entry : queueMap.entrySet()) {
+            GameZoneKey gameZoneKey = entry.getKey();
+            Queue<ExecutableJob> jobs = entry.getValue();
+            int maxRunJob = cache.getGameZoneMap().get(gameZoneKey).getMaxRunJob();
+            if (maxRunJob > 1) {
+                for (int i = 0; i < maxRunJob; i++) {
+                    ExecutableJob job = jobs.poll();
+                    if (null != job)
+                        scheduleJob(job);
+                }
+            } else {
+                ExecutableJob job = jobs.poll();
                 if (null != job)
                     scheduleJob(job);
             }

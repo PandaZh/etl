@@ -3,7 +3,6 @@ package cc.changic.platform.etl.schedule.util;
 import cc.changic.platform.etl.base.model.ETLTask;
 import cc.changic.platform.etl.base.model.db.*;
 import cc.changic.platform.etl.base.model.util.ETLTaskKey;
-import cc.changic.platform.etl.base.model.util.GameZoneKey;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
 import org.slf4j.Logger;

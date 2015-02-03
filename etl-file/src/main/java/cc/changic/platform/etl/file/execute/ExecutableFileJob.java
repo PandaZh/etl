@@ -2,7 +2,6 @@ package cc.changic.platform.etl.file.execute;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.model.db.*;
-import cc.changic.platform.etl.base.model.util.GameZoneKey;
 import com.google.common.base.Strings;
 
 import java.io.Serializable;

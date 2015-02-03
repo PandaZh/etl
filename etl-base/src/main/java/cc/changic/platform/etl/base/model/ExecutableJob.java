@@ -1,6 +1,7 @@
 package cc.changic.platform.etl.base.model;
 
-import cc.changic.platform.etl.base.model.util.GameZoneKey;
+
+import cc.changic.platform.etl.base.model.db.GameZoneKey;
 
 import java.util.Date;
 

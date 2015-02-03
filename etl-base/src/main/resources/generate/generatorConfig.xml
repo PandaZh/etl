@@ -45,9 +45,9 @@
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
                <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
-        <table schema="db_etl_server_0001" tableName="t_c_task_file_task" domainObjectName="FileTask"
-               enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"
-               enableSelectByExample="false" selectByExampleQueryId="false"/>
+        <!--<table schema="db_etl_server_0001" tableName="t_c_task_file_task" domainObjectName="FileTask"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
         <!--<table schema="db_etl_server_0001" tableName="t_c_job" domainObjectName="Job"-->
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
