@@ -9,7 +9,7 @@ import java.util.Date;
  */
 public class TimeUtil {
 
-    public final static String LOG_FILE_SUFFIX_FORMAT = "yyyy-MM-dd.HH-mm";
+    public final static String LOG_FILE_SUFFIX_FORMAT = "yyyy-MM-dd.HHmm";
     public final static SimpleDateFormat LOG_FILE_SUFFIX_FORMATTER = new SimpleDateFormat(LOG_FILE_SUFFIX_FORMAT);
 
     public final static String ISO_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
@@ -30,14 +30,14 @@ public class TimeUtil {
     }
 
     /**
-     * 时间格式 yyyy-MM-dd.HH-mm
+     * 时间格式 yyyy-MM-dd.HHmm
      */
     public static String getLogSuffix(Date date) {
         return LOG_FILE_SUFFIX_FORMATTER.format(date);
     }
 
     /**
-     * 时间格式 yyyy-MM-dd.HH-mm
+     * 时间格式 yyyy-MM-dd.HHmm
      */
     public static Date getLogSuffix(String dateTime) throws ParseException {
         return LOG_FILE_SUFFIX_FORMATTER.parse(dateTime);

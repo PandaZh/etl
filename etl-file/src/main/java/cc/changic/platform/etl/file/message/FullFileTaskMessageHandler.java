@@ -1,10 +1,10 @@
 package cc.changic.platform.etl.file.message;
 
-import cc.changic.platform.etl.base.dao.JobMapper;
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.service.JobService;
+import cc.changic.platform.etl.base.util.LogFileUtil;
+import cc.changic.platform.etl.base.util.MD5Checksum;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
-import cc.changic.platform.etl.file.util.LogFileUtil;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
@@ -91,28 +90,39 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
         }
     }
 
-    private void doRequest(ETLMessage message) throws FileNotFoundException {
+    private void doRequest(ETLMessage message) throws Exception {
         if (null == message.getBody())
             throw new ETLException("Request message body can not be null");
         if (!(message.getBody() instanceof ExecutableFileJob))
             throw new ETLException("Request message body must be instance of " + ExecutableFileJob.class);
         this.message = message;
         ExecutableFileJob fileJob = (ExecutableFileJob) message.getBody();
-        File sourceFile = getSourceFile(fileJob);
-        if (null == sourceFile) {
-            return;
-        }
-        if (!(sourceFile.exists() && sourceFile.isFile())) {
+        try {
+            File sourceFile = getSourceFile(fileJob);
+            if (null == sourceFile) {
+                logger.error("File not found [job_id={}, file=null]", fileJob.getJobID());
+                return;
+            }
+            if (!(sourceFile.exists() && sourceFile.isFile())) {
+                fileJob.getJob().setStatus(ExecutableJob.FAILED);
+                fileJob.getJob().setOptionDesc("未找到日志文件，文件：" + sourceFile.getAbsolutePath() + "不存在");
+                logger.error("File not found [job_id={}, file={}]", fileJob.getJobID(), sourceFile.getAbsolutePath());
+                return;
+            }
+            if (null == attachFile) {
+                attachFile = new RandomAccessFile(sourceFile, "r");
+            }
+            // 设置有附件，让编码器编码时不认为交互结束
+            this.message.setAttachment(new ETLMessageAttachment());
+            // 设置文件名
+            fileJob.setFileName(sourceFile.getName());
+            // 设置MD5
+            fileJob.setMd5(MD5Checksum.getFileMD5Checksum(sourceFile.getAbsolutePath()));
+        } catch (Exception e) {
+            logger.error("Get source file error: {}", e.getMessage(), e);
             fileJob.getJob().setStatus(ExecutableJob.FAILED);
-            fileJob.getJob().setOptionDesc("未找到日志文件，文件：" + sourceFile.getAbsolutePath() + "不存在");
-            return;
+            fileJob.getJob().setOptionDesc("终端获取日志文件异常：" + e.getMessage());
         }
-        if (null == attachFile) {
-            attachFile = new RandomAccessFile(sourceFile, "r");
-        }
-        fileJob.setFileName(sourceFile.getName());
-        this.message.setAttachment(new ETLMessageAttachment());
-        // TODO md5
     }
 
     private File getSourceFile(ExecutableFileJob fileJob) {
@@ -148,8 +158,8 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             this.message = message;
             responseFileJob = (ExecutableFileJob) message.getBody();
             // 判断是否在拉取数据的时候就出现了错误
-            if (responseFileJob.getJob().getStatus() == ExecutableJob.FAILED) {
-                jobService.doError(responseFileJob.getJob(), "客户端错误:" + responseFileJob.getJob().getOptionDesc());
+            if (responseFileJob.getJob().getStatus().equals(ExecutableJob.FAILED)) {
+                jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "客户端错误:" + responseFileJob.getJob().getOptionDesc());
             } else {
                 // 先构造存储文件
                 if (null == storageFile) {
@@ -157,7 +167,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     File tmpFile = new File(storageDir, responseFileJob.getFileName());
                     if (tmpFile.exists()) {
                         logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
-                        jobService.doError(responseFileJob.getJob(), "已存在文件:" + tmpFile.getAbsolutePath());
+                        jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "已存在文件:" + tmpFile.getAbsolutePath());
                         ctx.close();
                         return;
                     }
@@ -171,11 +181,11 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             if (null != storageFile) {
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", responseFileJob.getJob().getId());
-                    jobService.doError(responseFileJob.getJob(), "附件为空.");
+                    jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "附件为空.");
                     ctx.close();
                 } else if (!(message.getAttachment().getData() instanceof ByteBuf)) {
                     logger.error("Write file error, attachment type error: job_id={}", responseFileJob.getJob().getId());
-                    jobService.doError(responseFileJob.getJob(), "附件类型错误.");
+                    jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "附件类型错误.");
                     ctx.close();
                 } else {
                     ByteBuf buf = null;
@@ -194,13 +204,18 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 }
             } else {
                 logger.error("Write file error, not init storage file: job_id={}", responseFileJob.getJob().getId());
-                jobService.doError(responseFileJob.getJob(), "未初始化用于写入的文件.");
+                jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "未初始化用于写入的文件.");
                 ctx.close();
             }
         }
     }
 
-    private void doFinish() {
-        // TODO 写完文件后计算MD5和入库等
+    private void doFinish() throws Exception {
+        File targetFile = new File(responseFileJob.getStorageDir(), responseFileJob.getFileName());
+        if (responseFileJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
+            jobService.doFileSuccess(responseFileJob.getJob(), responseFileJob.getFileName(), responseFileJob.getMd5(), responseFileJob.getFileTask().getNextInterval());
+        } else {
+            jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "MD5校验错误!");
+        }
     }
 }

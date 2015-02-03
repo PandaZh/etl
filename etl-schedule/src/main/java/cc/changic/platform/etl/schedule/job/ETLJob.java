@@ -8,7 +8,7 @@ import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
 import cc.changic.platform.etl.schedule.net.Client;
-import cc.changic.platform.etl.schedule.scheduler.ETLScheduler;
+import cc.changic.platform.etl.schedule.scheduler.ETLSchedulerImpl;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -28,8 +28,8 @@ public class ETLJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         JobDataMap dataMap = context.getMergedJobDataMap();
-        Object tmpSpringContext = dataMap.get(ETLScheduler.SPRING_CONTEXT_KEY);
-        Object tmpExecutableJob = dataMap.get(ETLScheduler.ETL_JOB_KEY);
+        Object tmpSpringContext = dataMap.get(ETLSchedulerImpl.SPRING_CONTEXT_KEY);
+        Object tmpExecutableJob = dataMap.get(ETLSchedulerImpl.ETL_JOB_KEY);
         Assert.notNull(tmpSpringContext, "Spring context is null");
         Assert.notNull(tmpExecutableJob, "Executable Job is null");
         if (!(tmpSpringContext instanceof ConfigurableApplicationContext)) {

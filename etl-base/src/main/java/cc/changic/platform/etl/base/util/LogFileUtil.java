@@ -1,6 +1,6 @@
-package cc.changic.platform.etl.file.util;
+package cc.changic.platform.etl.base.util;
 
-import cc.changic.platform.etl.base.util.TimeUtil;
+import cc.changic.platform.etl.base.model.db.Job;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -111,30 +111,55 @@ public class LogFileUtil {
      * @param lastRecordTime 最后一次记录的时间
      * @return
      */
-    public static String getNextLogFileName(String srcName, short interval, Date lastRecordTime) {
-        Matcher matcher = TIMESTAMP_PATTERN.matcher(srcName);
-        if (matcher.find()) {
-            String fieldName = matcher.group(1);
-            String regex = Pattern.quote("[" + fieldName + "]");
-            Calendar next = Calendar.getInstance();
-            next.setTime(lastRecordTime);
-            next.add(Calendar.MINUTE, interval);
-            srcName = srcName.replaceAll(regex, TimeUtil.getLogSuffix(next.getTime()));
+    public static String getNextLogFileName(String srcName, Job job, short interval, Date lastRecordTime) {
+        try {
+            Matcher matcher = DIR_PATTERN.matcher(srcName);
+            Class<?> clazz = job.getClass();
+            while (matcher.find()) {
+                String fieldName = matcher.group(1);
+                String regex = Pattern.quote("{" + fieldName + "}");
+                try {
+                    Field field = clazz.getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    Object value = field.get(job);
+                    if (null == value)
+                        throw new NullPointerException("No value in field [" + fieldName + "] in class [" + job.getClass() + "]");
+                    srcName = srcName.replaceAll(regex, value.toString());
+                } catch (NoSuchFieldException e) {
+                    throw new NoSuchFieldException("Not found field [" + fieldName + "] in class [" + job.getClass() + "]");
+                }
+            }
+            matcher = TIMESTAMP_PATTERN.matcher(srcName);
+            if (matcher.find()) {
+                String fieldName = matcher.group(1);
+                String regex = Pattern.quote("[" + fieldName + "]");
+                Calendar next = Calendar.getInstance();
+                next.setTime(lastRecordTime);
+                next.add(Calendar.MINUTE, interval);
+                srcName = srcName.replaceAll(regex, TimeUtil.getLogSuffix(next.getTime()));
+            }
+            return srcName;
+        } catch (Exception e) {
+            throw new RuntimeException("Pattern fileName error!" + e.getClass());
         }
-        return srcName;
     }
 
 
     /**
      * 获取日志文件时间戳后缀
      *
-     * @param filePath 文件的绝对路径或者简单文件名
+     * @param fileName 文件的绝对路径或者简单文件名
      * @return yyyy-MM-dd.HH-mm格式后缀
      */
-    public static String getLogFileTimestampSuffix(String filePath) {
-        if (filePath.length() <= TimeUtil.LOG_FILE_SUFFIX_FORMAT.length())
+    public static String getLogFileTimestampSuffix(String fileName) {
+        if (fileName.length() <= TimeUtil.LOG_FILE_SUFFIX_FORMAT.length())
             return null;
-        return filePath.substring(filePath.length() - TimeUtil.LOG_FILE_SUFFIX_FORMAT.length(), filePath.length());
+        return fileName.substring(fileName.length() - TimeUtil.LOG_FILE_SUFFIX_FORMAT.length(), fileName.length());
+    }
+
+    public static Date getLogFileTimestamp(String fileName) throws ParseException {
+        String suffix = getLogFileTimestampSuffix(fileName);
+        return TimeUtil.getLogSuffix(suffix);
     }
 
 }

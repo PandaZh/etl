@@ -2,14 +2,15 @@ package cc.changic.platform.etl.file.execute;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.model.db.*;
+import cc.changic.platform.etl.base.model.util.GameZoneKey;
 import com.google.common.base.Strings;
 
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 
-import static cc.changic.platform.etl.file.util.LogFileUtil.getLogFileDir;
-import static cc.changic.platform.etl.file.util.LogFileUtil.getNextLogFileName;
+import static cc.changic.platform.etl.base.util.LogFileUtil.getLogFileDir;
+import static cc.changic.platform.etl.base.util.LogFileUtil.getNextLogFileName;
 
 /**
  * 可执行的文件任务
@@ -27,6 +28,7 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     private String fileName;
     private String sourceDir;
     private String storageDir;
+    private String md5;
 
     public ExecutableFileJob(App app, GameZone gameZone, FileTask fileTask, Job job, ODSConfig odsConfig) {
         this.app = app;
@@ -66,6 +68,16 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
         return null == getJob() ? null : getJob().getNextTime();
     }
 
+    @Override
+    public Short getNextInterval() {
+        return getFileTask().getNextInterval();
+    }
+
+    @Override
+    public GameZoneKey getGameZoneKey() {
+        return new GameZoneKey(job.getAppId(), job.getGameZoneId());
+    }
+
     public App getApp() {
         return app;
     }
@@ -92,7 +104,7 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
 
     public String getFileName() {
         if (Strings.isNullOrEmpty(fileName)) {
-            fileName = getNextLogFileName(getFileTask().getFileName(), getFileTask().getNextInterval(), getJob().getLastRecordTime());
+            fileName = getNextLogFileName(getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), getJob().getLastRecordTime());
         }
         return fileName;
     }
@@ -115,5 +127,11 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
         return storageDir;
     }
 
+    public String getMd5() {
+        return md5;
+    }
 
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
 }

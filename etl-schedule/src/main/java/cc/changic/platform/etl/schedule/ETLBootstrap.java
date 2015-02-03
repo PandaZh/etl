@@ -1,8 +1,8 @@
 package cc.changic.platform.etl.schedule;
 
-import cc.changic.platform.etl.base.dao.AppMapper;
+import cc.changic.platform.etl.base.schedule.ETLScheduler;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
-import cc.changic.platform.etl.schedule.scheduler.ETLScheduler;
+import cc.changic.platform.etl.schedule.scheduler.ETLSchedulerImpl;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
@@ -40,7 +40,7 @@ public class ETLBootstrap {
     @Bean(initMethod = "init", destroyMethod = "clear")
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
     public ETLScheduler ETLScheduler() throws SchedulerException {
-        return new ETLScheduler();
+        return new ETLSchedulerImpl();
     }
 
     public static void main(String[] args) {
