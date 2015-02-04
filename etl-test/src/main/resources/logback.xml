@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <!-- 控制台输出 -->
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder
+            by default -->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- log文件会记录所有等级的日志 -->
+    <appender name="info"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>E:/logs/etl/log_login_1</File>
+        <Encoding>UTF-8</Encoding>
+        <encoder>
+            <pattern>%date [%thread] %-5level %logger{80} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>E:/logs/etl/log_login_1.%d{yyyy-MM-dd}</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 主的日志 -->
+    <root level="DEBUG">
+        <appender-ref ref="info"/>
+        <appender-ref ref="error"/>
+        <appender-ref ref="stdout"/>
+    </root>
+</configuration>  

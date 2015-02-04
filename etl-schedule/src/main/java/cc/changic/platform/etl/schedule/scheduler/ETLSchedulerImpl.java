@@ -74,7 +74,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
     }
 
 
-    public ExecutableJob addJob(Job job) {
+    private ExecutableJob addJob(Job job) {
         // 工作队列按照游戏区分组
         GameZoneKey gameZoneKey = new GameZoneKey(job.getAppId(), job.getGameZoneId());
         // 使用优先级队列,时间越小优先级越高
@@ -87,6 +87,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
         if (taskTable.equals(FileTask.class.getAnnotation(TaskTable.class).tableName())) {
             executableJob = ExecutableJobUtil.buildFileJob(cache, job);
             jobs.offer(executableJob);
+            logger.info("Add job to queue={}, job={}",gameZoneKey, executableJob.toString());
         } else {
             logger.warn("Not support task_table={} and job_id={}", job.getTaskTable(), job.getId());
         }

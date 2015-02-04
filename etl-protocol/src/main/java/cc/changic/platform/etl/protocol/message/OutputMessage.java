@@ -17,9 +17,14 @@ public interface OutputMessage extends IoMessage {
     ETLMessage getMessage();
 
     /**
+     * 设置写出的消息
+     * @param message 需要写出的消息
+     */
+    void setMessage(ETLMessage message);
+
+    /**
      * 构造分片附件
      * @param chunkHeader
-     * @param <T>
      * @return
      */
     ChunkedInput getChunkAttach(ByteBuf chunkHeader);

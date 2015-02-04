@@ -4,7 +4,9 @@ import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.file.commom.FileJobType;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.file.message.FullFileTaskMessageHandler;
+import cc.changic.platform.etl.file.message.IncrementalFileTaskMessageHandler;
 import cc.changic.platform.etl.protocol.exception.ETLException;
+import cc.changic.platform.etl.protocol.message.DuplexMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
 import cc.changic.platform.etl.schedule.net.Client;
@@ -42,22 +44,23 @@ public class ETLJob implements Job {
         if (tmpExecutableJob instanceof ExecutableFileJob) {
             ExecutableFileJob fileJob = (ExecutableFileJob) tmpExecutableJob;
             Short jobType = fileJob.getJobType();
+            ETLMessage etlMessage = new ETLMessage();
+            etlMessage.setBody(fileJob);
+            etlMessage.setHeader(new ETLMessageHeader());
+            DuplexMessage handler = null;
             if (jobType == FileJobType.FILE_JOB_TYPE_FULL) {
-                ETLMessage etlMessage = new ETLMessage();
-                etlMessage.setBody(fileJob);
-                etlMessage.setHeader(new ETLMessageHeader());
-                FullFileTaskMessageHandler handler = springContext.getBean(FullFileTaskMessageHandler.class);
-                handler.setMessage(etlMessage);
-                Client client = springContext.getBean(Client.class);
-                try {
-                    client.write(fileJob.getClientIP(), handler);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                handler = springContext.getBean(FullFileTaskMessageHandler.class);
             } else if (jobType == FileJobType.FILE_JOB_TYPE_INCREMENTAL) {
-
+                handler = springContext.getBean(IncrementalFileTaskMessageHandler.class);
             } else {
                 throw new ETLException("Not support file job type [" + jobType + "]");
+            }
+            handler.setMessage(etlMessage);
+            Client client = springContext.getBean(Client.class);
+            try {
+                client.write(fileJob.getClientIP(), handler);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }

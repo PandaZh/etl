@@ -27,6 +27,21 @@ public class JobService {
     @Autowired(required = false)
     private ETLScheduler etlScheduler;
 
+    public boolean doIncrementalFileSuccess(Job job, Short nextInterval, long offset) {
+        job.setOptionDesc("SUCCESS");
+        job.setModifyTime(new Date());
+        job.setLastRecordOffset(offset);
+        if (null == job.getNextTime()) {
+            job.setNextTime(new Date());
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(job.getNextTime());
+        calendar.add(Calendar.MINUTE, nextInterval);
+        job.setNextTime(calendar.getTime());
+        jobMapper.updateByPrimaryKey(job);
+        return etlScheduler.addAndScheduleJob(job);
+    }
+
     public boolean doFileSuccess(Job job, String fileName, String desc, Short nextInterval) {
         job.setStatus(ExecutableJob.SUCCESS);
         job.setOptionDesc(desc);
@@ -60,6 +75,7 @@ public class JobService {
         calendar.add(Calendar.MINUTE, nextInterval);
         job.setNextTime(calendar.getTime());
         jobMapper.updateByPrimaryKey(job);
+        etlScheduler.addAndScheduleJob(job);
     }
 
 

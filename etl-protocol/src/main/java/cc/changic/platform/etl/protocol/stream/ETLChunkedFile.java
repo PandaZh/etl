@@ -28,17 +28,36 @@ public class ETLChunkedFile implements ChunkedInput<ByteBuf> {
      * @throws IOException
      */
     public ETLChunkedFile(ByteBuf headerBuf, RandomAccessFile file) throws IOException {
+        this(headerBuf, file, 0, file.length());
+    }
+
+    /**
+     * @param headerBuf 附件消息报头16字节
+     * @param file      附件文件
+     * @param offset    偏移量
+     * @throws IOException
+     */
+    public ETLChunkedFile(ByteBuf headerBuf, RandomAccessFile file, long offset, long endOffset) throws IOException {
         if (null == headerBuf) {
             throw new NullPointerException("headerBuf");
         }
         if (file == null) {
             throw new NullPointerException("file");
         }
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset: " + offset + " (expected: 0 or greater)");
+        }
+        if (endOffset < 0) {
+            throw new IllegalArgumentException("endOffset: " + endOffset + " (expected: 0 or greater)");
+        }
+        if (offset > endOffset) {
+            throw new IllegalArgumentException("endOffset: " + endOffset + " must greater than offset: " + offset);
+        }
         chunkSize = ChunkDataConfiguration.getChunkSize();
         this.headerBuf = headerBuf;
         this.file = file;
-        offset = startOffset = 0;
-        endOffset = offset + file.length();
+        this.offset = startOffset = offset;
+        this.endOffset = endOffset;
         file.seek(offset);
     }
 

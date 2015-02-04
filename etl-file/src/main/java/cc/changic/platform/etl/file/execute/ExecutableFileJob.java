@@ -27,7 +27,10 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     private String fileName;
     private String sourceDir;
     private String storageDir;
+    // 全量拉取时文件的MD5值
     private String md5;
+    // 增量拉取时每次增量的字节数
+    private long incrementalOffset;
 
     public ExecutableFileJob(App app, GameZone gameZone, FileTask fileTask, Job job, ODSConfig odsConfig) {
         this.app = app;
@@ -132,5 +135,21 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
 
     public void setMd5(String md5) {
         this.md5 = md5;
+    }
+
+    public long getIncrementalOffset() {
+        return incrementalOffset;
+    }
+
+    public void setIncrementalOffset(long incrementalOffset) {
+        this.incrementalOffset = incrementalOffset;
+    }
+
+    @Override
+    public String toString() {
+        return "ExecutableFileJob{" +
+                "id=" + getJobID() +
+                ", name=" + getFileTask().getTaskName() +
+                '}';
     }
 }

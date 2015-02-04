@@ -6,12 +6,12 @@
     <modules>
         <module>etl-protocol</module>
         <module>etl-file</module>
-        <module>etl-test</module>
+        <!--<module>etl-test</module>-->
         <module>etl-terminal</module>
         <module>etl-schedule</module>
         <module>etl-base</module>
-        <module>etl-model</module>
-        <module>etl-db</module>
+        <!--<module>etl-model</module>-->
+        <!--<module>etl-db</module>-->
     </modules>
     <parent>
         <artifactId>super-pom</artifactId>
@@ -73,18 +73,18 @@
             <version>4.1.0.Beta3</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jzlib</artifactId>
-            <version>1.1.2</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.jcraft</groupId>-->
+            <!--<artifactId>jzlib</artifactId>-->
+            <!--<version>1.1.2</version>-->
+        <!--</dependency>-->
 
         <!-- protobuf -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.5.0</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.google.protobuf</groupId>-->
+            <!--<artifactId>protobuf-java</artifactId>-->
+            <!--<version>2.5.0</version>-->
+        <!--</dependency>-->
 
         <!-- guava -->
         <dependency>
@@ -100,18 +100,23 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.4</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>commons-io</groupId>-->
+            <!--<artifactId>commons-io</artifactId>-->
+            <!--<version>2.4</version>-->
+        <!--</dependency>-->
     </dependencies>
+
 
     <build>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <targetPath>./</targetPath>
+                <filtering>true</filtering>
+                <excludes>
+                    <exclude>generate/*</exclude>
+                </excludes>
             </resource>
             <resource>
                 <directory>src/main/config</directory>

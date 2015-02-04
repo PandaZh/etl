@@ -118,6 +118,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             fileJob.setFileName(sourceFile.getName());
             // 设置MD5
             fileJob.setMd5(MD5Checksum.getFileMD5Checksum(sourceFile.getAbsolutePath()));
+            fileJob.getJob().setStatus(ExecutableJob.SUCCESS);
         } catch (Exception e) {
             logger.error("Get source file error: {}", e.getMessage(), e);
             fileJob.getJob().setStatus(ExecutableJob.FAILED);
