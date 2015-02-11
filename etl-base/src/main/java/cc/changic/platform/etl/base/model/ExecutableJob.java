@@ -2,6 +2,7 @@ package cc.changic.platform.etl.base.model;
 
 
 import cc.changic.platform.etl.base.model.db.GameZoneKey;
+import cc.changic.platform.etl.base.model.db.Job;
 
 import java.util.Date;
 
@@ -17,4 +18,5 @@ public interface ExecutableJob extends Comparable<ExecutableJob>{
     Date getNextTime();
     Short getNextInterval();
     GameZoneKey getGameZoneKey();
+    Job getJob();
 }

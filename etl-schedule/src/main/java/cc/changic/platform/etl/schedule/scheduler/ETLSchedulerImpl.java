@@ -6,12 +6,14 @@ import cc.changic.platform.etl.base.model.db.FileTask;
 import cc.changic.platform.etl.base.model.db.GameZoneKey;
 import cc.changic.platform.etl.base.model.db.Job;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
+import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
 import cc.changic.platform.etl.schedule.job.ETLJob;
 import cc.changic.platform.etl.schedule.util.ExecutableJobUtil;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -24,6 +26,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +41,8 @@ public class ETLSchedulerImpl implements ETLScheduler {
 
     public final static String ETL_JOB_KEY = "data";
     public final static String SPRING_CONTEXT_KEY = "spring_context";
+    public final static String JOB_SERVICE = "job_service";
+
     private final static AtomicBoolean INITIALIZED = new AtomicBoolean(false);
 
     private Logger logger = LoggerFactory.getLogger(ETLSchedulerImpl.class);
@@ -50,6 +55,8 @@ public class ETLSchedulerImpl implements ETLScheduler {
     private ConfigCache cache;
     @Autowired
     private Scheduler scheduler;
+    @Autowired
+    private JobService jobService;
 
     @Override
     public void init() {
@@ -87,7 +94,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
         if (taskTable.equals(FileTask.class.getAnnotation(TaskTable.class).tableName())) {
             executableJob = ExecutableJobUtil.buildFileJob(cache, job);
             jobs.offer(executableJob);
-            logger.info("Add job to queue={}, job={}",gameZoneKey, executableJob.toString());
+            logger.info("Add job to queue={}, job={}", gameZoneKey, executableJob.toString());
         } else {
             logger.warn("Not support task_table={} and job_id={}", job.getTaskTable(), job.getId());
         }
@@ -146,6 +153,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
             JobDataMap dataMap = new JobDataMap(new HashMap<String, Object>());
             dataMap.put(ETL_JOB_KEY, job);
             dataMap.put(SPRING_CONTEXT_KEY, context);
+            dataMap.put(JOB_SERVICE, jobService);
             Integer jobID = job.getJobID();
             // 创建调度任务
             JobDetail jobDetail = newJob(ETLJob.class).withIdentity("Job[" + jobID + "]", groupName).build();
@@ -156,6 +164,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
                         .withIdentity("Trigger[" + jobID + "]", groupName)
                         .usingJobData(dataMap)
                         .startNow()
+
                         .build();
             } else {
                 trigger = newTrigger()
@@ -164,7 +173,9 @@ public class ETLSchedulerImpl implements ETLScheduler {
                         .startAt(job.getNextTime())
                         .build();
             }
-            scheduler.scheduleJob(jobDetail, trigger);
+            Set<Trigger> triggers = Sets.newHashSet();
+            triggers.add(trigger);
+            scheduler.scheduleJob(jobDetail, triggers, true);
             return true;
         } catch (Exception e) {
             logger.error("Schedule job error, job_id={}, message={}", job.getJobID(), e.getMessage(), e);

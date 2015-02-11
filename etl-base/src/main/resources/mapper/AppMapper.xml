@@ -9,40 +9,40 @@
         <result column="db_pwd" property="dbPwd" jdbcType="VARCHAR"/>
     </resultMap>
     <sql id="Base_Column_List">
-    
-    app_id, app_name, db_user, db_pwd
-  </sql>
+
+        app_id, app_name, db_user, db_pwd
+    </sql>
 
     <select id="selectAll" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
-        from db_etl_server_0001.t_c_app_config
+        from t_c_app_config
     </select>
 
     <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
 
         select
         <include refid="Base_Column_List"/>
-        from db_etl_server_0001.t_c_app_config
+        from t_c_app_config
         where app_id = #{appId,jdbcType=INTEGER}
     </select>
 
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    
-    delete from db_etl_server_0001.t_c_app_config
-    where app_id = #{appId,jdbcType=INTEGER}
-  </delete>
+
+        delete from t_c_app_config
+        where app_id = #{appId,jdbcType=INTEGER}
+    </delete>
     <insert id="insert" parameterType="cc.changic.platform.etl.base.model.db.App">
-    
-    insert into db_etl_server_0001.t_c_app_config (app_id, app_name, db_user, 
-      db_pwd)
-    values (#{appId,jdbcType=INTEGER}, #{appName,jdbcType=VARCHAR}, #{dbUser,jdbcType=VARCHAR}, 
-      #{dbPwd,jdbcType=VARCHAR})
-  </insert>
+
+        insert into t_c_app_config (app_id, app_name, db_user,
+        db_pwd)
+        values (#{appId,jdbcType=INTEGER}, #{appName,jdbcType=VARCHAR}, #{dbUser,jdbcType=VARCHAR},
+        #{dbPwd,jdbcType=VARCHAR})
+    </insert>
     <insert id="insertSelective" parameterType="cc.changic.platform.etl.base.model.db.App">
 
-        insert into db_etl_server_0001.t_c_app_config
+        insert into t_c_app_config
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="appId != null">
                 app_id,
@@ -74,7 +74,7 @@
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="cc.changic.platform.etl.base.model.db.App">
 
-        update db_etl_server_0001.t_c_app_config
+        update t_c_app_config
         <set>
             <if test="appName != null">
                 app_name = #{appName,jdbcType=VARCHAR},
@@ -90,7 +90,7 @@
     </update>
     <update id="updateByPrimaryKey" parameterType="cc.changic.platform.etl.base.model.db.App">
     
-    update db_etl_server_0001.t_c_app_config
+    update t_c_app_config
     set app_name = #{appName,jdbcType=VARCHAR},
       db_user = #{dbUser,jdbcType=VARCHAR},
       db_pwd = #{dbPwd,jdbcType=VARCHAR}
