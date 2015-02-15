@@ -49,9 +49,10 @@ public class JobService {
         Date logTime = null;
         try {
             logTime = LogFileUtil.getLogFileTimestamp(fileName);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             doError(job, nextInterval, "日志文件时间格式错误");
             logger.error("时间格式转换错误:job_id={},{}", job.getId(), e.getMessage(), e);
+            // return 确保不会影响到已存在的数据
             return false;
         }
         job.setLastRecordTime(logTime);

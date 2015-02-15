@@ -1,6 +1,7 @@
 package cc.changic.platform.etl.base.util;
 
 import cc.changic.platform.etl.base.model.db.Job;
+import com.google.common.base.Strings;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,7 +46,7 @@ public class LogFileUtil {
                 continue;
             // 如果文件后缀为空，放弃计算
             String suffix = getLogFileTimestampSuffix(file.getPath());
-            if (null == suffix)
+            if (Strings.isNullOrEmpty(suffix))
                 continue;
             // 如果没有最老文件,认为当前文件最老
             if (null == oldestFile) {
@@ -149,7 +150,7 @@ public class LogFileUtil {
      * 获取日志文件时间戳后缀
      *
      * @param fileName 文件的绝对路径或者简单文件名
-     * @return yyyy-MM-dd.HH-mm格式后缀
+     * @return yyyy-MM-dd.HHmm格式后缀
      */
     public static String getLogFileTimestampSuffix(String fileName) {
         if (fileName.length() <= TimeUtil.LOG_FILE_SUFFIX_FORMAT.length())
@@ -162,5 +163,16 @@ public class LogFileUtil {
         return TimeUtil.getLogSuffix(suffix);
     }
 
+    /**
+     * 获取日志文件除时间戳之外的文件名，也就是正在写入的日志文件的文件名
+     *
+     * @param fileName 文件的绝对路径或者简单文件名
+     * @return log_login_{gameZoneId}.[timestamp] ===> log_login_{gameZoneId}
+     */
+    public static String getLogFileBaseName(String fileName) {
+        if (fileName.length() <= ("." + TimeUtil.LOG_FILE_SUFFIX_FORMAT).length())
+            return null;
+        return fileName.substring(0, fileName.length() - ("." + TimeUtil.LOG_FILE_SUFFIX_FORMAT).length());
+    }
 }
 

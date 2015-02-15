@@ -4,6 +4,7 @@ import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.base.util.LogFileUtil;
 import cc.changic.platform.etl.base.util.MD5Checksum;
+import cc.changic.platform.etl.base.util.TimeUtil;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
@@ -12,6 +13,7 @@ import cc.changic.platform.etl.protocol.rmi.ETLMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageAttachment;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
 import cc.changic.platform.etl.protocol.stream.ETLChunkedFile;
+import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,6 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.util.Calendar;
+import java.util.Date;
 
 import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.REQUEST;
 
@@ -65,11 +69,12 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
 
     @Override
     public ChunkedInput getChunkAttach(ByteBuf chunkHeader) {
-        if (null == attachFile)
-            return null;
         try {
+            if (null == attachFile || attachFile.length() == 0)
+                return null;
             return new ETLChunkedFile(chunkHeader, attachFile);
         } catch (IOException e) {
+
             logger.error("Get chunk file error:{}", e.getMessage(), e);
         }
         return null;
@@ -113,7 +118,8 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 attachFile = new RandomAccessFile(sourceFile, "r");
             }
             // 设置有附件，让编码器编码时不认为交互结束
-            this.message.setAttachment(new ETLMessageAttachment());
+            if (attachFile.length() > 0)
+                this.message.setAttachment(new ETLMessageAttachment());
             // 设置文件名
             fileJob.setFileName(sourceFile.getName());
             // 设置MD5
@@ -131,7 +137,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
         try {
             // 计算源文件夹
             String sourceDir = fileJob.getSourceDir();
-            logger.info("Calculated job source file: job_id={}, source_dir={}", fileJob.getJob().getId(), sourceDir);
+            logger.info("Calculating job source file: job_id={}, source_dir={}", fileJob.getJob().getId(), sourceDir);
             if (null == fileJob.getJob().getLastRecordTime()) {
                 // 最后记录时间为空时为第一次拉取，获取最老的文件
                 sourceFile = LogFileUtil.getOldestLogFile(sourceDir);
@@ -143,6 +149,35 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 String fileName = fileJob.getFileName();
                 logger.info("Calculated job source file: job_id={}, source_dir={}, file_name={}", fileJob.getJob().getId(), sourceDir, fileName);
                 sourceFile = new File(sourceDir, fileName);
+                // 服务器停机文件空档处理
+                Date lastRecordTime = fileJob.getJob().getLastRecordTime();
+                if (!sourceFile.exists()) {
+                    String baseName = LogFileUtil.getLogFileBaseName(sourceFile.getAbsolutePath());
+                    if (!Strings.isNullOrEmpty(baseName)) {
+                        File baseFile = new File(baseName);
+                        if (baseFile.exists()) {
+                            long lastModified = baseFile.lastModified();
+                            // 计算出分钟间隔
+                            int interval = (int) ((lastModified - lastRecordTime.getTime()) / (1000 * 60));
+                            // 计算出间隔倍数
+                            int multiple = interval / fileJob.getNextInterval();
+                            if (multiple > 0) {
+                                // 使用时间倍数换算日志后缀
+                                for (int i = 1; i <= multiple; i++) {
+                                    Calendar calendar = Calendar.getInstance();
+                                    calendar.setTime(lastRecordTime);
+                                    calendar.add(Calendar.MINUTE, i * fileJob.getNextInterval());
+                                    String suffix = TimeUtil.getLogSuffix(calendar.getTime());
+                                    File intervalLogFile = new File(baseName + "." + suffix);
+                                    if (intervalLogFile.exists()) {
+                                        sourceFile = intervalLogFile;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             logger.error("Build source file error: job_id={}, desc={}", fileJob.getJob().getId(), e.getMessage(), e);
@@ -194,10 +229,6 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                         buf = (ByteBuf) message.getAttachment().getData();
                         FileChannel channel = storageFile.getChannel();
                         channel.write(buf.nioBuffers());
-                        if (message.getHeader().isLastPackage()) {
-                            storageFile.close();
-                            doFinish();
-                        }
                     } finally {
                         if (null != buf)
                             buf.release();
@@ -209,13 +240,23 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 ctx.close();
             }
         }
+
+        if (message.getHeader().isLastPackage()) {
+            doFinish();
+            if (null != storageFile)
+                storageFile.close();
+        }
     }
 
     private void doFinish() throws Exception {
         File targetFile = new File(responseFileJob.getStorageDir(), responseFileJob.getFileName());
         if (responseFileJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
-            jobService.doFileSuccess(responseFileJob.getJob(), responseFileJob.getFileName(), responseFileJob.getMd5(), responseFileJob.getFileTask().getNextInterval());
+            boolean success = jobService.doFileSuccess(responseFileJob.getJob(), responseFileJob.getFileName(), responseFileJob.getMd5(), responseFileJob.getFileTask().getNextInterval());
+            if (!success) {
+                jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "修改Job表出错!");
+            }
         } else {
+            targetFile.deleteOnExit();
             jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "MD5校验错误!");
         }
     }

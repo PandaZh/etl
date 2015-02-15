@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.util.Date;
 
 /**
  * Created by Panda.Z on 2015/1/22.
@@ -34,13 +35,7 @@ public class BuffTest {
     @Test
     public void RandomFileTest() {
 
-        try {
-            AttributeKey<Integer> attributeKey = AttributeKey.valueOf("counter");
-            System.out.println(new ETLMessageHeader().getMessageType());
-            RandomAccessFile file = new RandomAccessFile("E:\\logs\\sdk\\error.2014-12-26", "r");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 
 

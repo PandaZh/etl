@@ -164,7 +164,6 @@ public class ETLSchedulerImpl implements ETLScheduler {
                         .withIdentity("Trigger[" + jobID + "]", groupName)
                         .usingJobData(dataMap)
                         .startNow()
-
                         .build();
             } else {
                 trigger = newTrigger()

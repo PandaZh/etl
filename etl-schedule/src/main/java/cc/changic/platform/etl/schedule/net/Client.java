@@ -33,8 +33,11 @@ public class Client {
         this.port = port;
     }
 
+
+    static EventLoopGroup group = new NioEventLoopGroup();
+
     public void write(String host, DuplexMessage message) throws Exception {
-        EventLoopGroup group = new NioEventLoopGroup();
+
         try {
             Bootstrap b = new Bootstrap();
             b.group(group)
@@ -43,11 +46,11 @@ public class Client {
             ChannelFuture future = b.connect(host, port).sync();
             Channel channel = future.channel();
             channel.writeAndFlush(message);
-        } catch (Exception e){
-            logger.error("Netty client exception: {}",e.getMessage(),e);
-            group.shutdownGracefully();
+        } catch (Exception e) {
+            logger.error("Netty client exception: {}", e.getMessage(), e);
+//            group.shutdownGracefully();
             throw e;
-        }finally {
+        } finally {
 //            group.shutdownGracefully();
         }
     }
