@@ -1,7 +1,7 @@
 package cc.changic.platform.etl.file.message;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
-import cc.changic.platform.etl.base.service.JobService;
+import cc.changic.platform.etl.base.service.JobServiceImpl;
 import cc.changic.platform.etl.base.util.LogFileUtil;
 import cc.changic.platform.etl.base.util.MD5Checksum;
 import cc.changic.platform.etl.base.util.TimeUtil;
@@ -46,7 +46,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     private Logger logger = LoggerFactory.getLogger(FullFileTaskMessageHandler.class);
 
     @Autowired(required = false)
-    private JobService jobService;
+    private JobServiceImpl jobService;
 
     private ExecutableFileJob responseFileJob;
     private ETLMessage message;
@@ -195,7 +195,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             responseFileJob = (ExecutableFileJob) message.getBody();
             // 判断是否在拉取数据的时候就出现了错误
             if (responseFileJob.getJob().getStatus().equals(ExecutableJob.FAILED)) {
-                jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "客户端错误:" + responseFileJob.getJob().getOptionDesc());
+                jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "客户端错误:" + responseFileJob.getJob().getOptionDesc());
             } else {
                 // 先构造存储文件
                 if (null == storageFile) {
@@ -203,7 +203,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     File tmpFile = new File(storageDir, responseFileJob.getFileName());
                     if (tmpFile.exists()) {
                         logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
-                        jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "已存在文件:" + tmpFile.getAbsolutePath());
+                        jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "已存在文件:" + tmpFile.getAbsolutePath());
                         ctx.close();
                         return;
                     }
@@ -217,11 +217,11 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             if (null != storageFile) {
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", responseFileJob.getJob().getId());
-                    jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "附件为空.");
+                    jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "附件为空.");
                     ctx.close();
                 } else if (!(message.getAttachment().getData() instanceof ByteBuf)) {
                     logger.error("Write file error, attachment type error: job_id={}", responseFileJob.getJob().getId());
-                    jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "附件类型错误.");
+                    jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "附件类型错误.");
                     ctx.close();
                 } else {
                     ByteBuf buf = null;
@@ -236,7 +236,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 }
             } else {
                 logger.error("Write file error, not init storage file: job_id={}", responseFileJob.getJob().getId());
-                jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "未初始化用于写入的文件.");
+                jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "未初始化用于写入的文件.");
                 ctx.close();
             }
         }
@@ -251,13 +251,13 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     private void doFinish() throws Exception {
         File targetFile = new File(responseFileJob.getStorageDir(), responseFileJob.getFileName());
         if (responseFileJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
-            boolean success = jobService.doFileSuccess(responseFileJob.getJob(), responseFileJob.getFileName(), responseFileJob.getMd5(), responseFileJob.getFileTask().getNextInterval());
+            boolean success = jobService.doFileSuccess(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getFileName(), responseFileJob.getMd5(), responseFileJob.getFileTask().getNextInterval());
             if (!success) {
-                jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "修改Job表出错!");
+                jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "修改Job表出错!");
             }
         } else {
             targetFile.deleteOnExit();
-            jobService.doError(responseFileJob.getJob(), responseFileJob.getNextInterval(), "MD5校验错误!");
+            jobService.doError(responseFileJob.getJob(),responseFileJob.getJobType(), responseFileJob.getNextInterval(), "MD5校验错误!");
         }
     }
 }

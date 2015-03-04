@@ -1,7 +1,8 @@
 package cc.changic.platform.etl.file.message;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
-import cc.changic.platform.etl.base.service.JobService;
+import cc.changic.platform.etl.base.model.db.ODSConfig;
+import cc.changic.platform.etl.base.service.JobServiceImpl;
 import cc.changic.platform.etl.base.util.LogFileUtil;
 import cc.changic.platform.etl.base.util.TimeUtil;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
@@ -55,9 +56,9 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
     private RandomAccessFile storageFile;
     private ETLChunkedFile chunkedFile;
     private ExecutableFileJob job;
-
+    private File tmpFile;
     @Autowired(required = false)
-    private JobService jobService;
+    private JobServiceImpl jobService;
 
     @Override
     public void read(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
@@ -159,11 +160,11 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 this.message = message;
                 this.job = (ExecutableFileJob) message.getBody();
                 if (job.getJob().getStatus().equals(ExecutableJob.FAILED)) {
-                    jobService.doError(job.getJob(), job.getNextInterval(), "客户端错误:" + job.getJob().getOptionDesc());
+                    jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "客户端错误:" + job.getJob().getOptionDesc());
                 } else if (job.getJob().getStatus().equals(ExecutableJob.NO_DATA_CHANGE)) {
-                    jobService.doIncrementalFileSuccess(job.getJob(), job.getNextInterval(), job.getJob().getLastRecordOffset());
+                    jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset());
                 } else {
-                    File tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + TimeUtil.getLogSuffix(job.getNextTime()));
+                    tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + TimeUtil.getLogSuffix(job.getNextTime()));
                     if (!tmpFile.getParentFile().exists())
                         Files.createParentDirs(tmpFile);
                     storageFile = new RandomAccessFile(tmpFile, "rw");
@@ -181,12 +182,12 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             } else {
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", job.getJob().getId());
-                    jobService.doError(job.getJob(), job.getNextInterval(), "附件为空.");
+                    jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "附件为空.");
                     ctx.close();
                     storageFile.close();
                 } else if (!(message.getAttachment().getData() instanceof ByteBuf)) {
                     logger.error("Write file error, attachment type error: job_id={}", job.getJob().getId());
-                    jobService.doError(job.getJob(), job.getNextInterval(), "附件类型错误.");
+                    jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "附件类型错误.");
                     ctx.close();
                     storageFile.close();
                 } else {
@@ -207,14 +208,12 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
         } catch (Exception e) {
             logger.error("{}", e.getMessage(), e);
             if (null != this.job)
-                jobService.doError(job.getJob(), job.getNextInterval(), e.getMessage());
+                jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
         }
     }
 
     private void doFinish() throws IOException {
-
         storageFile.seek(0);
-
         List<String> datas = Lists.newArrayList();
         String data = storageFile.readLine();
         while (data != null) {
@@ -225,8 +224,9 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
         PreparedStatement statement = null;
         try {
             Class.forName("org.postgresql.Driver");
-            String url = "jdbc:postgresql://192.168.50.195:3433/db_etl_server";
-            connection = DriverManager.getConnection(url, "gp_user", "123456");
+            ODSConfig odsConfig = job.getOdsConfig();
+            String url = "jdbc:postgresql://" + odsConfig.getOdsIp() + ":" + odsConfig.getOdsPort() + "/" + odsConfig.getOdsSchema();
+            connection = DriverManager.getConnection(url, odsConfig.getOdsUser(), odsConfig.getOdsPwd());
             statement = connection.prepareStatement(job.getFileTask().getInsertSql());
             char split = 0x01;
             for (String data2 : datas) {
@@ -239,12 +239,13 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 statement.addBatch();
             }
             statement.executeBatch();
-            jobService.doIncrementalFileSuccess(job.getJob(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset());
+            jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset());
         } catch (Exception e) {
             logger.error("Insert error ,sql={}, desc={}", job.getFileTask().getInsertSql(), e.getMessage(), e);
-            jobService.doError(job.getJob(), job.getNextInterval(), e.getMessage());
+            jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
         } finally {
             storageFile.close();
+            tmpFile.deleteOnExit();
             try {
                 if (null != statement)
                     statement.close();

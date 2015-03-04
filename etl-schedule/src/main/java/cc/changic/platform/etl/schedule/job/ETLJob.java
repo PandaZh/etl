@@ -1,7 +1,7 @@
 package cc.changic.platform.etl.schedule.job;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
-import cc.changic.platform.etl.base.service.JobService;
+import cc.changic.platform.etl.base.service.JobServiceImpl;
 import cc.changic.platform.etl.file.commom.FileJobType;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.file.message.FullFileTaskMessageHandler;
@@ -43,10 +43,10 @@ public class ETLJob implements Job {
         if (!(tmpExecutableJob instanceof ExecutableJob)) {
             throw new IllegalArgumentException("Executable Job must instanceof " + ExecutableJob.class);
         }
-        if (!(tmpJobService instanceof JobService)) {
-            throw new IllegalArgumentException("JobService must instanceof " + JobService.class);
+        if (!(tmpJobService instanceof JobServiceImpl)) {
+            throw new IllegalArgumentException("JobService must instanceof " + JobServiceImpl.class);
         }
-        JobService jobService = (JobService) tmpJobService;
+        JobServiceImpl jobService = (JobServiceImpl) tmpJobService;
         ExecutableJob executableJob = (ExecutableJob) tmpExecutableJob;
         try {
             ConfigurableApplicationContext springContext = (ConfigurableApplicationContext) tmpSpringContext;

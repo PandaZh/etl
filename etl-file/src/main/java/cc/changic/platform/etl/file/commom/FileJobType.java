@@ -4,6 +4,7 @@ package cc.changic.platform.etl.file.commom;
  * 文件任务类型
  */
 public class FileJobType {
+
     /**
      * 全量拉取
      */

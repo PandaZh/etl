@@ -6,7 +6,7 @@ import cc.changic.platform.etl.base.model.db.FileTask;
 import cc.changic.platform.etl.base.model.db.GameZoneKey;
 import cc.changic.platform.etl.base.model.db.Job;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
-import cc.changic.platform.etl.base.service.JobService;
+import cc.changic.platform.etl.base.service.JobServiceImpl;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
@@ -56,7 +56,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
     @Autowired
     private Scheduler scheduler;
     @Autowired
-    private JobService jobService;
+    private JobServiceImpl jobService;
 
     @Override
     public void init() {
