@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
+ * 2.0
  * Created by Panda.Z on 2015/1/27.
  */
 @Configuration
