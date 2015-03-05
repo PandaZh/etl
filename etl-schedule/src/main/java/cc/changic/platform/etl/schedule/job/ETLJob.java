@@ -71,7 +71,7 @@ public class ETLJob implements Job {
             }
         } catch (Exception e) {
             try {
-                jobService.doError(executableJob.getJob(), executableJob.getNextInterval(), e.getMessage());
+                jobService.doError(executableJob.getJob(), executableJob.getJobType(), executableJob.getNextInterval(), e.getMessage());
             } catch (Exception e1) {
                 logger.error("Do error {}", e.getMessage(), e);
             }

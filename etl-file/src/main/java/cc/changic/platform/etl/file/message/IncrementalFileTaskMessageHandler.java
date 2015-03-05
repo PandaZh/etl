@@ -245,7 +245,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
         } finally {
             storageFile.close();
-            tmpFile.deleteOnExit();
+//            tmpFile.deleteOnExit();
             try {
                 if (null != statement)
                     statement.close();
