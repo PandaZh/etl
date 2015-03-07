@@ -23,10 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -166,10 +163,18 @@ public class ETLSchedulerImpl implements ETLScheduler {
                         .startNow()
                         .build();
             } else {
+                // 避免任务暴增，当数据库下一次时间小于当前时间时，任务的实际执行时间为当前时间后5秒
+                Calendar nextTime = Calendar.getInstance();
+                nextTime.setTime(job.getNextTime());
+                Calendar now = Calendar.getInstance();
+                if (now.compareTo(nextTime) >= 0){
+                    now.add(Calendar.SECOND, 5);
+                    nextTime = now;
+                }
                 trigger = newTrigger()
                         .withIdentity("Trigger[" + jobID + "]", groupName)
                         .usingJobData(dataMap)
-                        .startAt(job.getNextTime())
+                        .startAt(nextTime.getTime())
                         .build();
             }
             Set<Trigger> triggers = Sets.newHashSet();

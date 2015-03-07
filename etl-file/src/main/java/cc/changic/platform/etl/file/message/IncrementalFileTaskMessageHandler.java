@@ -162,9 +162,9 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 if (job.getJob().getStatus().equals(ExecutableJob.FAILED)) {
                     jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "客户端错误:" + job.getJob().getOptionDesc());
                 } else if (job.getJob().getStatus().equals(ExecutableJob.NO_DATA_CHANGE)) {
-                    jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset());
+                    jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset(), "No data, FileName=" + job.getFileName());
                 } else {
-                    tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + TimeUtil.getLogSuffix(job.getNextTime()));
+                    tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + System.currentTimeMillis());
                     if (!tmpFile.getParentFile().exists())
                         Files.createParentDirs(tmpFile);
                     storageFile = new RandomAccessFile(tmpFile, "rw");
@@ -220,47 +220,57 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             datas.add(data);
             data = storageFile.readLine();
         }
-        Connection connection = null;
-        PreparedStatement statement = null;
-        try {
-            Class.forName("org.postgresql.Driver");
-            ODSConfig odsConfig = job.getOdsConfig();
-            String url = "jdbc:postgresql://" + odsConfig.getOdsIp() + ":" + odsConfig.getOdsPort() + "/" + odsConfig.getOdsSchema();
-            connection = DriverManager.getConnection(url, odsConfig.getOdsUser(), odsConfig.getOdsPwd());
-            statement = connection.prepareStatement(job.getFileTask().getInsertSql());
-            char split = 0x01;
-            for (String data2 : datas) {
-                Iterable<String> strings = Splitter.on(split).split(data2);
-                Iterator<String> iterator = strings.iterator();
-                int i = 1;
-                while (iterator.hasNext()) {
-                    statement.setObject(i++, iterator.next());
-                }
-                statement.addBatch();
-            }
-            statement.executeBatch();
-            jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset());
-        } catch (Exception e) {
-            logger.error("Insert error ,sql={}, desc={}", job.getFileTask().getInsertSql(), e.getMessage(), e);
-            jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
-        } finally {
-            storageFile.close();
-//            tmpFile.deleteOnExit();
+        logger.info("insert data to ODS: data_size={}, sql={}", datas.size(), job.getFileTask().getInsertSql());
+        if (datas.size() != 0) {
+            Connection connection = null;
+            PreparedStatement statement = null;
             try {
-                if (null != statement)
-                    statement.close();
-
-            } catch (SQLException e) {
-            }
-            if (null != connection)
+                Class.forName("org.postgresql.Driver");
+                ODSConfig odsConfig = job.getOdsConfig();
+                String url = "jdbc:postgresql://" + odsConfig.getOdsIp() + ":" + odsConfig.getOdsPort() + "/" + odsConfig.getOdsName();
+                connection = DriverManager.getConnection(url, odsConfig.getOdsUser(), odsConfig.getOdsPwd());
+                statement = connection.prepareStatement(job.getFileTask().getInsertSql());
+                char split = 0x01;
+                for (String data2 : datas) {
+                    Iterable<String> strings = Splitter.on(split).split(data2);
+                    Iterator<String> iterator = strings.iterator();
+                    int i = 1;
+                    while (iterator.hasNext()) {
+                        statement.setObject(i++, iterator.next());
+                    }
+                    statement.addBatch();
+                }
+                statement.executeBatch();
+                jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset(), "FileName=" + job.getFileName());
+            } catch (Exception e) {
+                logger.error("Insert error ,sql={}, desc={}", job.getFileTask().getInsertSql(), e.getMessage(), e);
+                jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
+            } finally {
+                storageFile.close();
+//            tmpFile.deleteOnExit();
                 try {
-                    connection.close();
+                    if (null != statement)
+                        statement.close();
+
                 } catch (SQLException e) {
                 }
+                if (null != connection)
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                    }
+            }
+        } else {
+            jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "No data get from client");
         }
+    }
 
-
-        //TODO
+    @Override
+    public void handlerNettyException() {
+        if (null != jobService) {
+            ExecutableFileJob job = (ExecutableFileJob) message.getBody();
+            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常");
+        }
     }
 }
 

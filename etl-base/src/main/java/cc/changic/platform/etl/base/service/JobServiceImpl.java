@@ -30,61 +30,74 @@ public class JobServiceImpl {
     @Autowired(required = false)
     private ETLScheduler etlScheduler;
 
-    public boolean doIncrementalFileSuccess(Job job, Short taskType, Short nextInterval, long offset) {
-        job.setOptionDesc("SUCCESS");
-        job.setModifyTime(new Date());
-        job.setLastRecordOffset(offset);
-        if (null == job.getNextTime()) {
-            job.setNextTime(new Date());
+    public boolean doIncrementalFileSuccess(Job job, Short taskType, Short nextInterval, long offset, String fileName) {
+        try {
+            job.setOptionDesc("SUCCESS: " + fileName);
+            job.setModifyTime(new Date());
+            job.setLastRecordOffset(offset);
+            if (null == job.getNextTime()) {
+                job.setNextTime(new Date());
+            }
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(job.getNextTime());
+            calendar.add(Calendar.MINUTE, nextInterval);
+            job.setNextTime(calendar.getTime());
+            jobMapper.updateByPrimaryKey(job);
+            JobLog jobLog = buildLog(job, taskType);
+            logMapper.insert(jobLog);
+        } catch (Exception e) {
+            logger.error("{}",e.getMessage(),e);
         }
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(job.getNextTime());
-        calendar.add(Calendar.MINUTE, nextInterval);
-        job.setNextTime(calendar.getTime());
-        jobMapper.updateByPrimaryKey(job);
-        JobLog jobLog = buildLog(job, taskType);
-        logMapper.insert(jobLog);
+        // TODO 下一次任务的调度应当无论代码是否异常都会进行
         return etlScheduler.addAndScheduleJob(job);
     }
 
     public boolean doFileSuccess(Job job, Short taskType, String fileName, String desc, Short nextInterval) {
-        job.setStatus(ExecutableJob.SUCCESS);
-        job.setOptionDesc(desc);
-        job.setModifyTime(new Date());
-        Date logTime = null;
         try {
-            logTime = LogFileUtil.getLogFileTimestamp(fileName);
+            job.setStatus(ExecutableJob.SUCCESS);
+            job.setOptionDesc(desc);
+            job.setModifyTime(new Date());
+            Date logTime = null;
+            try {
+                logTime = LogFileUtil.getLogFileTimestamp(fileName);
+            } catch (Exception e) {
+                doError(job, taskType, nextInterval, "日志文件时间格式错误");
+                logger.error("时间格式转换错误:job_id={},{}", job.getId(), e.getMessage(), e);
+                // return 确保不会影响到已存在的数据
+                return false;
+            }
+            job.setLastRecordTime(logTime);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(logTime);
+            calendar.add(Calendar.MINUTE, nextInterval);
+            job.setNextTime(calendar.getTime());
+            jobMapper.updateByPrimaryKey(job);
+            JobLog jobLog = buildLog(job, taskType);
+            logMapper.insert(jobLog);
         } catch (Exception e) {
-            doError(job, taskType, nextInterval, "日志文件时间格式错误");
-            logger.error("时间格式转换错误:job_id={},{}", job.getId(), e.getMessage(), e);
-            // return 确保不会影响到已存在的数据
-            return false;
+            logger.error("{}", e.getMessage(), e);
         }
-        job.setLastRecordTime(logTime);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(logTime);
-        calendar.add(Calendar.MINUTE, nextInterval);
-        job.setNextTime(calendar.getTime());
-        jobMapper.updateByPrimaryKey(job);
-        JobLog jobLog = buildLog(job, taskType);
-        logMapper.insert(jobLog);
         return etlScheduler.addAndScheduleJob(job);
     }
 
     public void doError(Job job, Short taskType, Short nextInterval, String message) {
-        job.setStatus(ExecutableJob.FAILED);
-        job.setOptionDesc(message);
-        job.setModifyTime(new Date());
-        if (null == job.getNextTime()) {
-            job.setNextTime(new Date());
+        try {
+            job.setStatus(ExecutableJob.FAILED);
+            job.setOptionDesc(message);
+            job.setModifyTime(new Date());
+            if (null == job.getNextTime()) {
+                job.setNextTime(new Date());
+            }
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(job.getNextTime());
+            calendar.add(Calendar.MINUTE, nextInterval);
+            job.setNextTime(calendar.getTime());
+            jobMapper.updateByPrimaryKey(job);
+            JobLog jobLog = buildLog(job, taskType);
+            logMapper.insert(jobLog);
+        } catch (Exception e) {
+            logger.error("{}", e.getMessage(), e);
         }
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(job.getNextTime());
-        calendar.add(Calendar.MINUTE, nextInterval);
-        job.setNextTime(calendar.getTime());
-        jobMapper.updateByPrimaryKey(job);
-        JobLog jobLog = buildLog(job, taskType);
-        logMapper.insert(jobLog);
         etlScheduler.addAndScheduleJob(job);
     }
 

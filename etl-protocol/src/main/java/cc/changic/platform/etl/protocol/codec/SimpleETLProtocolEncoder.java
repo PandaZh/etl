@@ -109,7 +109,8 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
         Long sessionID;
         while (true) {
             sessionID = System.currentTimeMillis();
-            AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf(sessionID.toString());
+            AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf("handlerMessage");
+//            AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf(sessionID.toString());
             Attribute<DuplexMessage> attribute = ctx.attr(attributeKey);
             if (null == attribute.get()) {
                 attribute.set(msg);

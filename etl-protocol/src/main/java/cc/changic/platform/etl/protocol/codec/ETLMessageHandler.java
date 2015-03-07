@@ -11,6 +11,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,8 @@ import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.RESPONSE;
 @Component
 @ChannelHandler.Sharable
 public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
+
+    private Logger logger = LoggerFactory.getLogger(ETLMessageHandler.class);
 
     @Autowired
     private MessageDispatcher dispatcher;
@@ -58,12 +62,19 @@ public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
         ctx.close();
+        logger.error("Netty exception: {}", cause.getMessage(), cause);
+        DuplexMessage handlerMessage = getHandlerMessage(ctx, null);
+        if (null != handlerMessage){
+            handlerMessage.handlerNettyException();
+        }else{
+            logger.error("Caught netty exception, but no handler message found");
+        }
     }
 
     private DuplexMessage getHandlerMessage(ChannelHandlerContext ctx, Long sessionID) {
-        AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf(sessionID.toString());
+        AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf("handlerMessage");
+//        AttributeKey<DuplexMessage> attributeKey = AttributeKey.valueOf(sessionID.toString());
         Attribute<DuplexMessage> attribute = ctx.attr(attributeKey);
         return attribute.get();
     }

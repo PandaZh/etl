@@ -37,9 +37,9 @@
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
                <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
-        <table schema="db_etl_server_0001" tableName="t_c_game_zone" domainObjectName="GameZone"
-               enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"
-               enableSelectByExample="false" selectByExampleQueryId="false"/>
+        <!--<table schema="db_etl_server_0001" tableName="t_c_game_zone" domainObjectName="GameZone"-->
+               <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+               <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
         <!--<table schema="db_etl_server_0001" tableName="t_c_ods_config" domainObjectName="ODSConfig"-->
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->

@@ -15,7 +15,10 @@
     <!--<bean id="httpServer" class="cc.changic.platform.etl.schedule.http.HttpServer">-->
     <!--<constructor-arg name="port" value="8080"/>-->
     <!--</bean>-->
-
+    <!-- 入库工具配置 -->
+    <bean class="cc.changic.platform.etl.file.python.ImportDataUtil">
+        <constructor-arg name="pythonScript" value=""/>
+    </bean>
     <!-- 调度配置 -->
     <bean id="schedulerFactory" class="org.quartz.impl.StdSchedulerFactory">
         <constructor-arg name="fileName" value="quartz.properties"/>

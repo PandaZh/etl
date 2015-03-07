@@ -29,6 +29,11 @@ import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.RESPONSE;
 @MessageToken(id = 0x0007)
 public class ExampleMessageHandler extends DuplexMessage {
 
+    @Override
+    public void handlerNettyException() {
+
+    }
+
     private ETLMessage message;
     private RandomAccessFile file;
     public String fileName;
