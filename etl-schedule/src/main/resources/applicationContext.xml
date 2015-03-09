@@ -16,8 +16,9 @@
     <!--<constructor-arg name="port" value="8080"/>-->
     <!--</bean>-->
     <!-- 入库工具配置 -->
-    <bean class="cc.changic.platform.etl.file.python.ImportDataUtil">
+    <bean class="cc.changic.platform.etl.file.exec.ImportDataCmdExecutor">
         <constructor-arg name="pythonScript" value=""/>
+        <constructor-arg name="timeout" value="-1"/>
     </bean>
     <!-- 调度配置 -->
     <bean id="schedulerFactory" class="org.quartz.impl.StdSchedulerFactory">

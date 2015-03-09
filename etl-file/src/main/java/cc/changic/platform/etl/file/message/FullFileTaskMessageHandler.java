@@ -5,8 +5,8 @@ import cc.changic.platform.etl.base.service.JobServiceImpl;
 import cc.changic.platform.etl.base.util.LogFileUtil;
 import cc.changic.platform.etl.base.util.MD5Checksum;
 import cc.changic.platform.etl.base.util.TimeUtil;
+import cc.changic.platform.etl.file.exec.ImportDataCmdExecutor;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
-import cc.changic.platform.etl.file.python.ImportDataUtil;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
@@ -15,7 +15,11 @@ import cc.changic.platform.etl.protocol.rmi.ETLMessageAttachment;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
 import cc.changic.platform.etl.protocol.stream.ETLChunkedFile;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.stream.ChunkedInput;
@@ -26,7 +30,6 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +37,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 
 import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.REQUEST;
 
@@ -46,11 +50,11 @@ import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.REQUEST;
 public class FullFileTaskMessageHandler extends DuplexMessage {
 
     private Logger logger = LoggerFactory.getLogger(FullFileTaskMessageHandler.class);
-
+    private Gson gson = new Gson();
     @Autowired(required = false)
     private JobServiceImpl jobService;
     @Autowired(required = false)
-    private ImportDataUtil importDataUtil;
+    private ImportDataCmdExecutor cmdExecutor;
 
     private ExecutableFileJob responseFileJob;
     private ETLMessage message;
@@ -257,19 +261,23 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             File targetFile = new File(responseFileJob.getStorageDir(), responseFileJob.getFileName());
             if (responseFileJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
                 try {
-                    String codeStr = importDataUtil.importDataByPython(targetFile);
-                    int code = 0;
+                    String result = cmdExecutor.exec(targetFile);
+                    logger.info("Import data: result={}", result);
+                    Map<String, Integer> jsonMap;
                     try {
-                        code = Integer.parseInt(codeStr);
+                        jsonMap = gson.fromJson(result, new TypeToken<Map<String, Integer>>() {
+                        }.getType());
                     } catch (Exception e) {
+                        jsonMap = Maps.newHashMap();
+                        logger.error("Json format error: {}", e.getMessage(), e);
                     }
-                    if (code == 1) {
+                    if (null != jsonMap.get("code") && jsonMap.get("code") == ImportDataCmdExecutor.IMPORT_SUCCESS) {
                         boolean success = jobService.doFileSuccess(responseFileJob.getJob(), responseFileJob.getJobType(), responseFileJob.getFileName(), responseFileJob.getMd5(), responseFileJob.getFileTask().getNextInterval());
                         if (!success) {
                             jobService.doError(responseFileJob.getJob(), responseFileJob.getJobType(), responseFileJob.getNextInterval(), "修改Job表出错!");
                         }
                     } else {
-                        jobService.doError(responseFileJob.getJob(), responseFileJob.getJobType(), responseFileJob.getNextInterval(), "入库错误：返回值=" + codeStr);
+                        jobService.doError(responseFileJob.getJob(), responseFileJob.getJobType(), responseFileJob.getNextInterval(), "入库错误：返回值=" + result);
                     }
                 } catch (Exception e) {
                     logger.error("Import data error: {}", e.getMessage(), e);
