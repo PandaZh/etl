@@ -16,7 +16,7 @@ import java.io.File;
 public class ImportDataCmdExecutor {
 
     public final static int IMPORT_SUCCESS = 1;
-
+    public final static int[] NORMAL_CODE = {1, 2, 3, 4, 5, 6, 7, 8};
     private Logger logger = LoggerFactory.getLogger(ImportDataCmdExecutor.class);
 
     private final String pythonScript;
@@ -45,21 +45,22 @@ public class ImportDataCmdExecutor {
     public String exec(File dataFile) {
         try {
             String cmd = "python " + pythonScript + " " + dataFile.getAbsolutePath();
-            logger.info("Import data: cmd={}, dataFile={}", cmd, dataFile.getAbsoluteFile());
             Executor executor = new DefaultExecutor();
-            executor.setExitValue(IMPORT_SUCCESS);
+            executor.setExitValues(NORMAL_CODE);
             CmdResultOutputStream out = new CmdResultOutputStream(1);
             CmdResultOutputStream err = new CmdResultOutputStream(1);
-            executor.setStreamHandler(new PumpStreamHandler(out, err));
+            PumpStreamHandler handler = new PumpStreamHandler(out, err);
+            executor.setStreamHandler(handler);
             CommandLine cl = CommandLine.parse(cmd);
-            int execute = executor.execute(cl);
-            if (execute == IMPORT_SUCCESS) {
+            int exitValue = executor.execute(cl);
+            logger.info("Import data: exitValue={}, cmd={},", exitValue, cmd);
+            if (exitValue == IMPORT_SUCCESS) {
                 return out.getResults().get(out.getResults().size() - 1);
             } else {
                 StringBuffer error = new StringBuffer();
-//                for (String tmp : out.getResults()) {
-//                    error.append(tmp);
-//                }
+                for (String tmp : out.getResults()) {
+                    error.append(tmp);
+                }
                 for (String tmp : err.getResults()) {
                     error.append(tmp);
                 }
@@ -68,8 +69,7 @@ public class ImportDataCmdExecutor {
             }
         } catch (Exception e) {
             logger.error("Import data java error:{}", e.getMessage(), e);
-            return "{\"code\":-1}";
+            return "{\"code\":-1, \"desc\":" + e.getMessage() + "}";
         }
-
     }
 }

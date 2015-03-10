@@ -162,7 +162,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 if (job.getJob().getStatus().equals(ExecutableJob.FAILED)) {
                     jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "客户端错误:" + job.getJob().getOptionDesc());
                 } else if (job.getJob().getStatus().equals(ExecutableJob.NO_DATA_CHANGE)) {
-                    jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset(), "No data, FileName=" + job.getFileName());
+                    jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset(), "No data change, FileName=" + job.getSourceDir() +job.getFileName());
                 } else {
                     tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + System.currentTimeMillis());
                     if (!tmpFile.getParentFile().exists())
@@ -241,7 +241,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                     statement.addBatch();
                 }
                 statement.executeBatch();
-                jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset(), "FileName=" + job.getFileName());
+                jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset(), "FileName=" + job.getSourceDir() + job.getFileName());
             } catch (Exception e) {
                 logger.error("Insert error ,sql={}, desc={}", job.getFileTask().getInsertSql(), e.getMessage(), e);
                 jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());

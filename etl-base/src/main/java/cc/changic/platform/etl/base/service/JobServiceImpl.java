@@ -7,6 +7,7 @@ import cc.changic.platform.etl.base.model.db.Job;
 import cc.changic.platform.etl.base.model.db.JobLog;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
 import cc.changic.platform.etl.base.util.LogFileUtil;
+import cc.changic.platform.etl.base.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Random;
 
 /**
  * Created by Panda.Z on 2015/1/31.
@@ -46,7 +48,7 @@ public class JobServiceImpl {
             JobLog jobLog = buildLog(job, taskType);
             logMapper.insert(jobLog);
         } catch (Exception e) {
-            logger.error("{}",e.getMessage(),e);
+            logger.error("{}", e.getMessage(), e);
         }
         // TODO 下一次任务的调度应当无论代码是否异常都会进行
         return etlScheduler.addAndScheduleJob(job);
@@ -55,9 +57,10 @@ public class JobServiceImpl {
     public boolean doFileSuccess(Job job, Short taskType, String fileName, String desc, Short nextInterval) {
         try {
             job.setStatus(ExecutableJob.SUCCESS);
-            job.setOptionDesc(desc);
+            job.setOptionDesc("File=[" + fileName + "], desc=[" + desc + "]");
             job.setModifyTime(new Date());
-            Date logTime = null;
+            // 计算最后记录时间
+            Date logTime;
             try {
                 logTime = LogFileUtil.getLogFileTimestamp(fileName);
             } catch (Exception e) {
@@ -67,9 +70,15 @@ public class JobServiceImpl {
                 return false;
             }
             job.setLastRecordTime(logTime);
+            // 计算下一次执行时间，如果本身NextTime不为空，依据NextTime计算，否则根据最后拉取时间计算
             Calendar calendar = Calendar.getInstance();
-            calendar.setTime(logTime);
-            calendar.add(Calendar.MINUTE, nextInterval);
+            if (null != job.getNextTime()){
+                calendar.setTime(job.getNextTime());
+                calendar.add(Calendar.MINUTE, nextInterval + random());
+            }else{
+                calendar.setTime(logTime);
+                calendar.add(Calendar.MINUTE, nextInterval + random());
+            }
             job.setNextTime(calendar.getTime());
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, taskType);
@@ -86,12 +95,16 @@ public class JobServiceImpl {
             job.setOptionDesc(message);
             job.setModifyTime(new Date());
             if (null == job.getNextTime()) {
-                job.setNextTime(new Date());
+                job.setNextTime(TimeUtil.getLogSuffix(TimeUtil.getLogSuffix(new Date())));
             }
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(job.getNextTime());
-            calendar.add(Calendar.MINUTE, nextInterval);
-            job.setNextTime(calendar.getTime());
+            Calendar next = Calendar.getInstance();
+            next.setTime(job.getNextTime());
+            Calendar now = Calendar.getInstance();
+            now.add(Calendar.MINUTE, nextInterval);
+            if (next.compareTo(now) < 0){
+                next.add(Calendar.MINUTE, nextInterval + random());
+            }
+            job.setNextTime(next.getTime());
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, taskType);
             logMapper.insert(jobLog);
@@ -101,7 +114,7 @@ public class JobServiceImpl {
         etlScheduler.addAndScheduleJob(job);
     }
 
-    private JobLog buildLog(Job job, Short type){
+    private JobLog buildLog(Job job, Short type) {
         JobLog log = new JobLog();
         log.setJobId(job.getId());
         log.setStatus(job.getStatus());
@@ -109,5 +122,9 @@ public class JobServiceImpl {
         log.setType(type);
         log.setCreateTime(new Date());
         return log;
+    }
+
+    private int random() {
+        return (int) Math.round(Math.random() * (55 - 5) + 5);
     }
 }
