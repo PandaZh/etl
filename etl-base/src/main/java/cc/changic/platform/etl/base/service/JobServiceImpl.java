@@ -74,11 +74,11 @@ public class JobServiceImpl {
             Calendar calendar = Calendar.getInstance();
             if (null != job.getNextTime()){
                 calendar.setTime(job.getNextTime());
-                calendar.add(Calendar.MINUTE, nextInterval + random());
             }else{
                 calendar.setTime(logTime);
-                calendar.add(Calendar.MINUTE, nextInterval + random());
             }
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.add(Calendar.MINUTE, nextInterval + random());
             job.setNextTime(calendar.getTime());
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, taskType);
@@ -101,7 +101,9 @@ public class JobServiceImpl {
             next.setTime(job.getNextTime());
             Calendar now = Calendar.getInstance();
             now.add(Calendar.MINUTE, nextInterval);
+            // 如果NextTime大于当前时间+时间间隔，那NextTime不需要再做运算
             if (next.compareTo(now) < 0){
+                next.set(Calendar.MINUTE, 0);
                 next.add(Calendar.MINUTE, nextInterval + random());
             }
             job.setNextTime(next.getTime());

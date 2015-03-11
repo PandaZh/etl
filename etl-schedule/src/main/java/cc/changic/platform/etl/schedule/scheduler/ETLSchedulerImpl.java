@@ -65,6 +65,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
                 for (Job etlJob : jobMap.values()) {
                     addJob(etlJob);
                 }
+//                scheduler.start();
                 scheduleOnInit();
             }
         } catch (Exception e) {
@@ -122,7 +123,10 @@ public class ETLSchedulerImpl implements ETLScheduler {
         for (Map.Entry<GameZoneKey, Queue<ExecutableJob>> entry : queueMap.entrySet()) {
             GameZoneKey gameZoneKey = entry.getKey();
             Queue<ExecutableJob> jobs = entry.getValue();
+
             int maxRunJob = cache.getGameZoneMap().get(gameZoneKey).getMaxRunJob();
+            // 如果单区的任务数大于配置的最大任务数，那么首次添加的
+            maxRunJob = maxRunJob <= jobs.size() ? maxRunJob : jobs.size();
             if (maxRunJob > 1) {
                 for (int i = 0; i < maxRunJob; i++) {
                     ExecutableJob job = jobs.poll();
@@ -145,7 +149,9 @@ public class ETLSchedulerImpl implements ETLScheduler {
     private boolean scheduleJob(ExecutableJob job) {
         try {
             // 使用GameZoneKey.toString()作为调度组名
-            String groupName = job.getGameZoneKey().toString();
+            GameZoneKey gameZoneKey = job.getGameZoneKey();
+            logger.info("Schedule job queue={}, job={}", gameZoneKey, job.toString());
+            String groupName = gameZoneKey.toString();
             // 设置调度任务所需的数据
             JobDataMap dataMap = new JobDataMap(new HashMap<String, Object>());
             dataMap.put(ETL_JOB_KEY, job);

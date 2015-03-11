@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -15,6 +16,13 @@ import java.util.Iterator;
  */
 public class Timer {
 
+    @Test
+    public void test(){
+        Calendar instance = Calendar.getInstance();
+        instance.set(Calendar.MINUTE, 0);
+        instance.add(Calendar.MINUTE, (int) (60 +  Math.round(Math.random() * (55 - 5) + 5)));
+        System.out.println(instance.getTime());
+    }
     @Test
     public void insert() {
         try {

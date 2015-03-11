@@ -197,12 +197,15 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
 
     private void doResponse(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
         // 附件中不带Body
+        boolean doError = false;
         if (null != message.getBody() && message.getBody() instanceof ExecutableFileJob) {
             this.message = message;
             reJob = (ExecutableFileJob) message.getBody();
             // 判断是否在拉取数据的时候就出现了错误
+
             if (reJob.getJob().getStatus().equals(ExecutableJob.FAILED)) {
                 jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "客户端错误:" + reJob.getJob().getOptionDesc());
+                doError = true;
             } else {
                 // 先构造存储文件
                 if (null == storageFile) {
@@ -211,6 +214,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     if (tmpFile.exists()) {
                         logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
                         jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "已存在文件:" + tmpFile.getAbsolutePath());
+                        doError = true;
                         ctx.close();
                         return;
                     }
@@ -225,10 +229,12 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", reJob.getJob().getId());
                     jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "附件为空.");
+                    doError = true;
                     ctx.close();
                 } else if (!(message.getAttachment().getData() instanceof ByteBuf)) {
                     logger.error("Write file error, attachment type error: job_id={}", reJob.getJob().getId());
                     jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "附件类型错误.");
+                    doError = true;
                     ctx.close();
                 } else {
                     ByteBuf buf = null;
@@ -243,13 +249,15 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 }
             } else {
                 logger.error("Write file error, not init storage file: job_id={}", reJob.getJob().getId());
-                jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "未初始化用于写入的文件.");
+                jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "未初始化用于写入的文件." + this.toString());
+                doError = true;
                 ctx.close();
             }
         }
 
         if (message.getHeader().isLastPackage()) {
-            doFinish();
+            if (!doError)
+                doFinish();
             if (null != storageFile)
                 storageFile.close();
         }
@@ -271,7 +279,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                         logger.error("Json format error: {}", e.getMessage(), e);
                     }
                     if (null != jsonMap.get("code") && jsonMap.get("code") == ImportDataCmdExecutor.IMPORT_SUCCESS) {
-                        boolean success = jobService.doFileSuccess(reJob.getJob(), reJob.getJobType(), new File(reJob.getSourceDir(),reJob.getFileName()).getAbsolutePath(), reJob.getMd5(), reJob.getFileTask().getNextInterval());
+                        boolean success = jobService.doFileSuccess(reJob.getJob(), reJob.getJobType(), new File(reJob.getSourceDir(), reJob.getFileName()).getAbsolutePath(), reJob.getMd5(), reJob.getFileTask().getNextInterval());
                         if (!success) {
                             jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "修改Job表出错!");
                         }

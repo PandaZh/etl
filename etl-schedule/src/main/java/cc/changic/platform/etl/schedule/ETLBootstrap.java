@@ -1,11 +1,14 @@
 package cc.changic.platform.etl.schedule;
 
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
+import cc.changic.platform.etl.protocol.dispatcher.MessageDispatcher;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
 import cc.changic.platform.etl.schedule.scheduler.ETLSchedulerImpl;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -21,6 +24,8 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 @Configuration
 @ComponentScan(basePackages = "cc.changic.platform.etl")
 public class ETLBootstrap {
+
+    static Logger logger = LoggerFactory.getLogger(ETLBootstrap.class);
 
     @Autowired
     private StdSchedulerFactory schedulerFactory;
@@ -47,11 +52,14 @@ public class ETLBootstrap {
         ConfigurableApplicationContext context = null;
         try {
             context = new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
+            context.getBean(MessageDispatcher.class);
             Scheduler scheduler = context.getBean(Scheduler.class);
             scheduler.start();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("{}", e.getMessage(), e);
+            if (null != context)
+                context.close();
             System.exit(-1);
         }
     }
