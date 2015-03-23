@@ -77,8 +77,12 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     @Override
     public ChunkedInput getChunkAttach(ByteBuf chunkHeader) {
         try {
-            if (null == attachFile || attachFile.length() == 0)
+            if (null == attachFile)
                 return null;
+            if (attachFile.length() == 0){
+                attachFile.close();
+                return null;
+            }
             return new ETLChunkedFile(chunkHeader, attachFile);
         } catch (IOException e) {
 
@@ -302,10 +306,10 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     }
 
     @Override
-    public void handlerNettyException() {
+    public void handlerNettyException(String errorMessage) {
         if (null != jobService) {
             ExecutableFileJob job = (ExecutableFileJob) message.getBody();
-            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常,File=" + job.getFileTask().getTaskName());
+            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常,File=" + job.getFileTask().getTaskName() + "[" + errorMessage + "]");
         }
     }
 }

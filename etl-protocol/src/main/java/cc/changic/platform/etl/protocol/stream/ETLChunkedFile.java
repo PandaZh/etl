@@ -74,39 +74,57 @@ public class ETLChunkedFile implements ChunkedInput<ByteBuf> {
 
     @Override
     public ByteBuf readChunk(ChannelHandlerContext ctx) throws Exception {
-        long offset = this.offset;
-        if (offset >= endOffset) {
-            return null;
-        }
-        // 构建用于附件传输的报头
-        ByteBuf sendHeader = buildSendHeader(ctx);
-        // 计算分片实际长度
-        int chunkSize = (int) Math.min(this.chunkSize - sendHeader.writerIndex(), endOffset - offset);
-        // 根据分片实际长度分配写出Buff大小
-        ByteBuf out = ctx.alloc().heapBuffer(chunkSize + sendHeader.writerIndex());
-        // 分配文件分片大小的Buff
-        ByteBuf chunkBuf = ctx.alloc().heapBuffer(chunkSize);
-        boolean release = true;
         try {
-            if (chunkSize < this.chunkSize - sendHeader.writerIndex()) {
+            long offset = this.offset;
+            if (offset >= endOffset) {
+                return null;
+            }
+            // 构建用于附件传输的报头
+            ByteBuf sendHeader = buildSendHeader(ctx);
+            // 计算分片实际长度
+            int chunkSize = (int) Math.min(this.chunkSize - sendHeader.writerIndex(), endOffset - offset);
+            // 根据分片实际长度分配写出Buff大小
+            ByteBuf out = ctx.alloc().heapBuffer(chunkSize + sendHeader.writerIndex());
+            // 分配文件分片大小的Buff
+            ByteBuf chunkBuf = ctx.alloc().heapBuffer(chunkSize);
+            boolean release = true;
+            boolean isLast = false;
+            try {
+                isLast = chunkSize < this.chunkSize - sendHeader.writerIndex();
                 // 设置是最后一个包
-                sendHeader.setBoolean(11, true);
-            }
-            sendHeader.setInt(21, chunkSize);
-            out.writeBytes(sendHeader);
+                if (isLast) {
+                    sendHeader.setBoolean(11, true);
+                }
+                sendHeader.setInt(21, chunkSize);
+                out.writeBytes(sendHeader);
 
-            file.readFully(chunkBuf.array(), chunkBuf.arrayOffset(), chunkSize);
-            chunkBuf.writerIndex(chunkSize);
-            this.offset = offset + chunkSize;
-            out.writeBytes(chunkBuf);
-            release = false;
-            return out;
-        } finally {
-            if (release) {
-                out.release();
+                file.readFully(chunkBuf.array(), chunkBuf.arrayOffset(), chunkSize);
+
+                chunkBuf.writerIndex(chunkSize);
+                this.offset = offset + chunkSize;
+                out.writeBytes(chunkBuf);
+                release = false;
+                return out;
+            } finally {
+                if (release) {
+                    out.release();
+                }
+                if (isLast){
+                    if (null != file){
+                        try {
+                            file.close();
+                        } catch (IOException e) {
+
+                        }
+                    }
+                }
+                chunkBuf.release();
+                sendHeader.release();
             }
-            chunkBuf.release();
-            sendHeader.release();
+        } catch (Exception e) {
+            if (null != file)
+                file.close();
+            throw e;
         }
     }
 
@@ -119,6 +137,7 @@ public class ETLChunkedFile implements ChunkedInput<ByteBuf> {
     public long progress() {
         return offset - startOffset;
     }
+
 
     /**
      * 构建用于附件传输的报头

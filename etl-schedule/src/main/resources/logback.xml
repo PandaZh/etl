@@ -44,7 +44,7 @@
     </appender>
 
     <!-- 主的日志 -->
-    <root level="DEBUG">
+    <root level="info">
         <appender-ref ref="info"/>
         <appender-ref ref="error"/>
         <appender-ref ref="stdout"/>

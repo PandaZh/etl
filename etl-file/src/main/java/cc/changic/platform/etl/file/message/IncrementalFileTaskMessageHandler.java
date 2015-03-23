@@ -87,6 +87,10 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
         if (null == attachFile)
             return null;
         try {
+            if (incrementalOffset == 0){
+                attachFile.close();
+                return null;
+            }
             chunkedFile = new ETLChunkedFile(chunkHeader, attachFile, attachOffset, attachOffset + incrementalOffset);
         } catch (IOException e) {
             logger.error("Get chunk file error:{}", e.getMessage(), e);
@@ -266,10 +270,10 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
     }
 
     @Override
-    public void handlerNettyException() {
+    public void handlerNettyException(String errorMessage) {
         if (null != jobService) {
             ExecutableFileJob job = (ExecutableFileJob) message.getBody();
-            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常");
+            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常"+ "[" + errorMessage + "]");
         }
     }
 }

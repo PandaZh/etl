@@ -26,11 +26,11 @@ import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.RESPONSE;
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-@MessageToken(id = 0x0007)
+//@MessageToken(id = 0x0007)
 public class ExampleMessageHandler extends DuplexMessage {
 
     @Override
-    public void handlerNettyException() {
+    public void handlerNettyException(String message) {
 
     }
 

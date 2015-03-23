@@ -5,5 +5,7 @@ package cc.changic.platform.etl.protocol.message;
  * Created by Panda.Z on 2015/1/19.
  */
 public abstract class DuplexMessage implements InputMessage, OutputMessage {
-    public abstract void handlerNettyException();
+
+    public abstract void handlerNettyException(String message);
+
 }
