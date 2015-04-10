@@ -10,13 +10,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 /**
- * Created by Panda.Z on 2015/2/2.
+ * 可执行任务工具类
+ * @author Panda.Z
  */
 public class ExecutableJobUtil {
 
     static Logger LOGGER = LoggerFactory.getLogger(ExecutableJobUtil.class);
 
-    public static ExecutableFileJob buildFileJob(ConfigCache cache, Job job) {
+    public static ExecutableFileJob buildFileJob(ConfigCache cache, Job job, ConfigVersion version) {
         Assert.notNull(job, "Build File-Job error:[source job is null]");
 
         App tmpApp = cache.getAppMap().get(job.getAppId());
@@ -39,6 +40,6 @@ public class ExecutableJobUtil {
             Assert.notNull(tmpTask, "Build File-Job error:[no ods_config found, task_id=" + job.getTaskId() + " and ods_id=" + instanceTask.getOdsId() + "]");
         }
 
-        return new ExecutableFileJob(tmpApp, tmpGameZone, instanceTask, job, tmpODS);
+        return new ExecutableFileJob(tmpApp, tmpGameZone, instanceTask, job, tmpODS, version);
     }
 }

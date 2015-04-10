@@ -1,16 +1,20 @@
 package cc.changic.platform.etl.schedule.scheduler;
 
 import cc.changic.platform.etl.base.annotation.TaskTable;
+import cc.changic.platform.etl.base.common.ExecutableJobType;
+import cc.changic.platform.etl.base.dao.ConfigVersionMapper;
 import cc.changic.platform.etl.base.model.ExecutableJob;
+import cc.changic.platform.etl.base.model.db.ConfigVersion;
 import cc.changic.platform.etl.base.model.db.FileTask;
 import cc.changic.platform.etl.base.model.db.GameZoneKey;
 import cc.changic.platform.etl.base.model.db.Job;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
-import cc.changic.platform.etl.base.service.JobServiceImpl;
+import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
-import cc.changic.platform.etl.schedule.job.ETLJob;
+import cc.changic.platform.etl.schedule.job.DataJob;
+import cc.changic.platform.etl.schedule.job.VersionJob;
 import cc.changic.platform.etl.schedule.util.ExecutableJobUtil;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -21,7 +25,9 @@ import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -36,11 +42,9 @@ import static org.quartz.TriggerBuilder.newTrigger;
  */
 public class ETLSchedulerImpl implements ETLScheduler {
 
-    public final static String ETL_JOB_KEY = "data";
-    public final static String SPRING_CONTEXT_KEY = "spring_context";
-    public final static String JOB_SERVICE = "job_service";
-
     private final static AtomicBoolean INITIALIZED = new AtomicBoolean(false);
+    private final static AtomicBoolean START_VERSION_MONITORING = new AtomicBoolean(false);
+    private final static AtomicBoolean IS_RELOADING = new AtomicBoolean(false);
 
     private Logger logger = LoggerFactory.getLogger(ETLSchedulerImpl.class);
 
@@ -53,19 +57,34 @@ public class ETLSchedulerImpl implements ETLScheduler {
     @Autowired
     private Scheduler scheduler;
     @Autowired
-    private JobServiceImpl jobService;
+    private ConfigVersionMapper versionMapper;
+    @Autowired
+    private ReloadConfig reloadConfig;
+    @Autowired
+    @Qualifier(ExecutableJobType.FILE_FULLY)
+    private JobService jobService;
+
+    private ConfigVersion configVersion;
 
     @Override
     public void init() {
         try {
+            if (START_VERSION_MONITORING.compareAndSet(false, true)) {
+                configVersion = versionMapper.selectLatest();
+                Assert.notNull(configVersion, "初始化配置版本信息错误,版本信息为空");
+                new Timer("Config_Version_Job").schedule(new VersionJob(versionMapper, this, reloadConfig), 0, reloadConfig.getInterval() * 1000);
+            }
             if (INITIALIZED.compareAndSet(false, true)) {
+                logger.info("Initialize ETL scheduler configuration");
                 // 初始化工作队列
                 queueMap.clear();
+                scheduler.start();
+                scheduler.resumeAll();
                 Map<Integer, Job> jobMap = cache.getJobMap();
                 for (Job etlJob : jobMap.values()) {
                     addJob(etlJob);
                 }
-//                scheduler.start();
+                IS_RELOADING.set(false);
                 scheduleOnInit();
             }
         } catch (Exception e) {
@@ -74,10 +93,46 @@ public class ETLSchedulerImpl implements ETLScheduler {
     }
 
     @Override
-    public void clear() {
-
+    public void reload() {
+        try {
+            if (IS_RELOADING.compareAndSet(false, true)) {
+                clear();
+                cache.destroy();
+                cache.caching();
+                init();
+            }
+        } catch (Exception e) {
+            logger.error("Reload configuration error:{}", e.getMessage(), e);
+        }
     }
 
+    @Override
+    public boolean isReloading() {
+        return IS_RELOADING.get();
+    }
+
+    @Override
+    public ConfigVersion getCurrentVersion() {
+        return this.configVersion;
+    }
+
+    @Override
+    public void setCurrentVersion(ConfigVersion version) {
+        this.configVersion = version;
+    }
+
+    @Override
+    public void clear() {
+        try {
+            logger.info("Clear ETL scheduler configuration");
+            scheduler.pauseAll();
+            scheduler.clear();
+            queueMap.clear();
+            INITIALIZED.set(false);
+        } catch (Exception e) {
+            logger.error("Clear configuration error:{}", e.getMessage(), e);
+        }
+    }
 
     private ExecutableJob addJob(Job job) {
         // 工作队列按照游戏区分组
@@ -90,7 +145,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
         String taskTable = job.getTaskTable();
         ExecutableFileJob executableJob = null;
         if (taskTable.equals(FileTask.class.getAnnotation(TaskTable.class).tableName())) {
-            executableJob = ExecutableJobUtil.buildFileJob(cache, job);
+            executableJob = ExecutableJobUtil.buildFileJob(cache, job, configVersion);
             jobs.offer(executableJob);
             logger.info("Add job to queue={}, job={}", gameZoneKey, executableJob.toString());
         } else {
@@ -107,7 +162,6 @@ public class ETLSchedulerImpl implements ETLScheduler {
         cacheJob.setLastRecordTime(job.getLastRecordTime());
         cacheJob.setLastRecordId(job.getLastRecordId());
         cacheJob.setLastRecordOffset(job.getLastRecordOffset());
-        // TODO 检查定时器中的任务数
         ExecutableJob executableJob = addJob(job);
         if (null != executableJob) {
             ExecutableJob pollJob = queueMap.get(executableJob.getGameZoneKey()).poll();
@@ -154,12 +208,12 @@ public class ETLSchedulerImpl implements ETLScheduler {
             String groupName = gameZoneKey.toString();
             // 设置调度任务所需的数据
             JobDataMap dataMap = new JobDataMap(new HashMap<String, Object>());
-            dataMap.put(ETL_JOB_KEY, job);
-            dataMap.put(SPRING_CONTEXT_KEY, context);
-            dataMap.put(JOB_SERVICE, jobService);
+            dataMap.put(DataJob.ETL_JOB_KEY, job);
+            dataMap.put(DataJob.SPRING_CONTEXT_KEY, context);
+            dataMap.put(DataJob.JOB_SERVICE, jobService);
             Integer jobID = job.getJobID();
             // 创建调度任务
-            JobDetail jobDetail = newJob(ETLJob.class).withIdentity("Job[" + jobID + "]", groupName).build();
+            JobDetail jobDetail = newJob(DataJob.class).withIdentity("Job[" + jobID + "]", groupName).build();
             // 创建触发器
             Trigger trigger;
             if (null == job.getNextTime()) {
@@ -173,7 +227,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
                 Calendar nextTime = Calendar.getInstance();
                 nextTime.setTime(job.getNextTime());
                 Calendar now = Calendar.getInstance();
-                if (now.compareTo(nextTime) >= 0){
+                if (now.compareTo(nextTime) >= 0) {
                     now.add(Calendar.SECOND, 5);
                     nextTime = now;
                 }
@@ -185,11 +239,13 @@ public class ETLSchedulerImpl implements ETLScheduler {
             }
             Set<Trigger> triggers = Sets.newHashSet();
             triggers.add(trigger);
-            scheduler.scheduleJob(jobDetail, triggers, true);
-            return true;
+            if (!IS_RELOADING.get()) {
+                scheduler.scheduleJob(jobDetail, triggers, true);
+                return true;
+            }
         } catch (Exception e) {
             logger.error("Schedule job error, job_id={}, message={}", job.getJobID(), e.getMessage(), e);
-            return false;
         }
+        return false;
     }
 }

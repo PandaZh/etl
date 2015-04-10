@@ -1,10 +1,10 @@
 package cc.changic.platform.etl.file.message;
 
+import cc.changic.platform.etl.base.common.ExecutableJobType;
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.model.db.ODSConfig;
-import cc.changic.platform.etl.base.service.JobServiceImpl;
+import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.base.util.LogFileUtil;
-import cc.changic.platform.etl.base.util.TimeUtil;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
@@ -22,6 +22,7 @@ import io.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -57,8 +58,10 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
     private ETLChunkedFile chunkedFile;
     private ExecutableFileJob job;
     private File tmpFile;
+
     @Autowired(required = false)
-    private JobServiceImpl jobService;
+    @Qualifier(ExecutableJobType.FILE_INCREMENTALLY)
+    private JobService jobService;
 
     @Override
     public void read(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
@@ -87,7 +90,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
         if (null == attachFile)
             return null;
         try {
-            if (incrementalOffset == 0){
+            if (incrementalOffset == 0) {
                 attachFile.close();
                 return null;
             }
@@ -164,9 +167,9 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 this.message = message;
                 this.job = (ExecutableFileJob) message.getBody();
                 if (job.getJob().getStatus().equals(ExecutableJob.FAILED)) {
-                    jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "客户端错误:" + job.getJob().getOptionDesc());
+                    jobService.onFailed(job, "客户端错误:" + job.getJob().getOptionDesc());
                 } else if (job.getJob().getStatus().equals(ExecutableJob.NO_DATA_CHANGE)) {
-                    jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset(), "No data change, FileName=" + job.getSourceDir() +job.getFileName());
+                    jobService.onSuccess(job, "No data change, FileName=" + job.getSourceDir() + job.getFileName());
                 } else {
                     tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + System.currentTimeMillis());
                     if (!tmpFile.getParentFile().exists())
@@ -186,12 +189,12 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             } else {
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", job.getJob().getId());
-                    jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "附件为空.");
+                    jobService.onFailed(job, "附件为空.");
                     ctx.close();
                     storageFile.close();
                 } else if (!(message.getAttachment().getData() instanceof ByteBuf)) {
                     logger.error("Write file error, attachment type error: job_id={}", job.getJob().getId());
-                    jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "附件类型错误.");
+                    jobService.onFailed(job, "附件类型错误.");
                     ctx.close();
                     storageFile.close();
                 } else {
@@ -212,7 +215,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
         } catch (Exception e) {
             logger.error("{}", e.getMessage(), e);
             if (null != this.job)
-                jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
+                jobService.onFailed(job, e.getMessage());
         }
     }
 
@@ -244,18 +247,19 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                     }
                     statement.addBatch();
                 }
-                statement.executeBatch();
-                jobService.doIncrementalFileSuccess(job.getJob(), job.getJobType(), job.getNextInterval(), job.getJob().getLastRecordOffset() + job.getIncrementalOffset(), "FileName=" + job.getSourceDir() + job.getFileName());
+                if (jobService.canUpdate(job)){
+                    statement.executeBatch();
+                    jobService.onSuccess(job, "FileName=" + job.getSourceDir() + job.getFileName());
+                }
             } catch (Exception e) {
                 logger.error("Insert error ,sql={}, desc={}", job.getFileTask().getInsertSql(), e.getMessage(), e);
-                jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), e.getMessage());
+                jobService.onFailed(job, e.getMessage());
             } finally {
                 storageFile.close();
 //            tmpFile.deleteOnExit();
                 try {
                     if (null != statement)
                         statement.close();
-
                 } catch (SQLException e) {
                 }
                 if (null != connection)
@@ -265,7 +269,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                     }
             }
         } else {
-            jobService.doError(job.getJob(), job.getJobType(), job.getNextInterval(), "No data get from client");
+            jobService.onFailed(job, "No data get from client");
         }
     }
 
@@ -273,7 +277,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
     public void handlerNettyException(String errorMessage) {
         if (null != jobService) {
             ExecutableFileJob job = (ExecutableFileJob) message.getBody();
-            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常"+ "[" + errorMessage + "]");
+            jobService.onFailed(job, "Netty异常" + "[" + errorMessage + "]");
         }
     }
 }

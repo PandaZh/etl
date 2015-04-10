@@ -20,6 +20,7 @@
         <constructor-arg name="pythonScript" value=""/>
         <constructor-arg name="timeout" value="-1"/>
     </bean>
+
     <!-- 调度配置 -->
     <bean id="schedulerFactory" class="org.quartz.impl.StdSchedulerFactory">
         <constructor-arg name="fileName" value="quartz.properties"/>
@@ -86,4 +87,11 @@
     <bean class="cc.changic.platform.etl.protocol.stream.ChunkDataConfiguration">
         <property name="chunkSize" value="2097152"/>
     </bean>
+
+    <bean class="cc.changic.platform.etl.schedule.scheduler.ReloadConfig">
+        <constructor-arg name="interval" value="30"/>
+        <constructor-arg name="startMinute" value="2"/>
+        <constructor-arg name="endMinute" value="9"/>
+    </bean>
+
 </beans>

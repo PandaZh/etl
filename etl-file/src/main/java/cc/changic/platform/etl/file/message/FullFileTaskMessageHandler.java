@@ -1,7 +1,8 @@
 package cc.changic.platform.etl.file.message;
 
+import cc.changic.platform.etl.base.common.ExecutableJobType;
 import cc.changic.platform.etl.base.model.ExecutableJob;
-import cc.changic.platform.etl.base.service.JobServiceImpl;
+import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.base.util.LogFileUtil;
 import cc.changic.platform.etl.base.util.MD5Checksum;
 import cc.changic.platform.etl.base.util.TimeUtil;
@@ -25,6 +26,7 @@ import io.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -50,8 +52,11 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
 
     private Logger logger = LoggerFactory.getLogger(FullFileTaskMessageHandler.class);
     private Gson gson = new Gson();
+
     @Autowired(required = false)
-    private JobServiceImpl jobService;
+    @Qualifier(ExecutableJobType.FILE_FULLY)
+    private JobService jobService;
+
     @Autowired(required = false)
     private ImportDataCmdExecutor cmdExecutor;
 
@@ -79,7 +84,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
         try {
             if (null == attachFile)
                 return null;
-            if (attachFile.length() == 0){
+            if (attachFile.length() == 0) {
                 attachFile.close();
                 return null;
             }
@@ -208,7 +213,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             // 判断是否在拉取数据的时候就出现了错误
 
             if (reJob.getJob().getStatus().equals(ExecutableJob.FAILED)) {
-                jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "客户端错误:" + reJob.getJob().getOptionDesc());
+                jobService.onFailed(reJob, "客户端错误:" + reJob.getJob().getOptionDesc());
                 doError = true;
             } else {
                 // 先构造存储文件
@@ -217,7 +222,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     File tmpFile = new File(storageDir, reJob.getFileName());
                     if (tmpFile.exists()) {
                         logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
-                        jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "已存在文件:" + tmpFile.getAbsolutePath());
+                        jobService.onFailed(reJob, "已存在文件:" + tmpFile.getAbsolutePath());
                         doError = true;
                         ctx.close();
                         return;
@@ -232,12 +237,12 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             if (null != storageFile) {
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", reJob.getJob().getId());
-                    jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "附件为空.");
+                    jobService.onFailed(reJob, "附件为空.");
                     doError = true;
                     ctx.close();
                 } else if (!(message.getAttachment().getData() instanceof ByteBuf)) {
                     logger.error("Write file error, attachment type error: job_id={}", reJob.getJob().getId());
-                    jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "附件类型错误.");
+                    jobService.onFailed(reJob, "附件类型错误.");
                     doError = true;
                     ctx.close();
                 } else {
@@ -253,7 +258,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 }
             } else {
                 logger.error("Write file error, not init storage file: job_id={}", reJob.getJob().getId());
-                jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "未初始化用于写入的文件." + this.toString());
+                jobService.onFailed(reJob, "未初始化用于写入的文件." + this.toString());
                 doError = true;
                 ctx.close();
             }
@@ -262,46 +267,57 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
         if (message.getHeader().isLastPackage()) {
             if (!doError)
                 doFinish();
-            if (null != storageFile)
-                storageFile.close();
         }
     }
 
     private void doFinish() {
+        boolean success = false;
+        File targetFile = null;
         try {
-            File targetFile = new File(reJob.getStorageDir(), reJob.getFileName());
-            if (reJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
-                try {
-                    String result = cmdExecutor.exec(targetFile);
-                    logger.info("Import data: result={}", result);
-                    Map<String, Integer> jsonMap;
+            targetFile = new File(reJob.getStorageDir(), reJob.getFileName());
+            // 判断配置是否在重新加载、判断携带版本号是否正确
+            if (jobService.canUpdate(reJob)){
+                // 校验MD5
+                if (reJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
                     try {
-                        jsonMap = gson.fromJson(result, new TypeToken<Map<String, Integer>>() {
-                        }.getType());
-                    } catch (Exception e) {
-                        jsonMap = Maps.newHashMap();
-                        logger.error("Json format error: {}", e.getMessage(), e);
-                    }
-                    if (null != jsonMap.get("code") && jsonMap.get("code") == ImportDataCmdExecutor.IMPORT_SUCCESS) {
-                        boolean success = jobService.doFileSuccess(reJob.getJob(), reJob.getJobType(), new File(reJob.getSourceDir(), reJob.getFileName()).getAbsolutePath(), reJob.getMd5(), reJob.getFileTask().getNextInterval());
-                        if (!success) {
-                            jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "修改Job表出错!");
+                        String result = cmdExecutor.exec(targetFile);
+                        logger.info("Import data: result={}", result);
+                        Map<String, Integer> jsonMap;
+                        try {
+                            jsonMap = gson.fromJson(result, new TypeToken<Map<String, Integer>>() {
+                            }.getType());
+                        } catch (Exception e) {
+                            jsonMap = Maps.newHashMap();
+                            logger.error("Json format error: {}", e.getMessage(), e);
                         }
-                    } else {
-                        jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "入库错误：返回值=" + result);
+                        // 判断入库是否成功
+                        if (null != jsonMap.get("code") && jsonMap.get("code") == ImportDataCmdExecutor.IMPORT_SUCCESS) {
+                            success = jobService.onSuccess(reJob, reJob.getMd5());
+                        } else {
+                            jobService.onFailed(reJob, "入库错误：返回值=" + result);
+                        }
+                    } catch (Exception e) {
+                        jobService.onFailed(reJob, "入库错误:" + e.getMessage());
+                        logger.error("Import data error: {}", e.getMessage(), e);
                     }
-                } catch (Exception e) {
-                    logger.error("Import data error: {}", e.getMessage(), e);
-                    targetFile.deleteOnExit();
-                    jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "入库错误:" + e.getMessage());
+                } else {
+                    jobService.onFailed(reJob, "MD5校验错误!");
                 }
-            } else {
-                targetFile.deleteOnExit();
-                jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), "MD5校验错误!");
             }
         } catch (Exception e) {
+            jobService.onFailed(reJob, e.getMessage());
             logger.error("Do finish error: {}", e.getMessage(), e);
-            jobService.doError(reJob.getJob(), reJob.getJobType(), reJob.getNextInterval(), e.getMessage());
+        } finally {
+            if (null != storageFile) {
+                try {
+                    storageFile.close();
+                } catch (IOException e) {
+                    logger.error("关闭文件流异常:file={},{}", targetFile.getAbsolutePath(), e.getMessage(), e);
+                }
+            }
+        }
+        if (!success && null != targetFile && targetFile.exists()) {
+            System.out.println(targetFile.delete());
         }
     }
 
@@ -309,7 +325,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     public void handlerNettyException(String errorMessage) {
         if (null != jobService) {
             ExecutableFileJob job = (ExecutableFileJob) message.getBody();
-            jobService.doError(job.getJob(), job.getFileTask().getTaskType(), job.getNextInterval(), "Netty异常,File=" + job.getFileTask().getTaskName() + "[" + errorMessage + "]");
+            jobService.onFailed(reJob, "Netty异常,File=" + job.getFileTask().getTaskName() + "[" + errorMessage + "]");
         }
     }
 }

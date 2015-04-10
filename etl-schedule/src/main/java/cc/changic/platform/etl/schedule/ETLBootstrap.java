@@ -25,6 +25,10 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 @ComponentScan(basePackages = "cc.changic.platform.etl")
 public class ETLBootstrap {
 
+    public final static String JOB_SCHEDULER = "job_scheduler";
+    public final static String VERSION_SCHEDULER = "version_scheduler";
+
+
     static Logger logger = LoggerFactory.getLogger(ETLBootstrap.class);
 
     @Autowired
@@ -53,9 +57,7 @@ public class ETLBootstrap {
         try {
             context = new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
             context.getBean(MessageDispatcher.class);
-            Scheduler scheduler = context.getBean(Scheduler.class);
-            scheduler.start();
-
+            context.getBean(Scheduler.class);
         } catch (Exception e) {
             logger.error("{}", e.getMessage(), e);
             if (null != context)

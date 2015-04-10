@@ -11,10 +11,10 @@
             <property name="suppressDate" value="true" />
         </commentGenerator>
 
-        <jdbcConnection userId="gp_user"
+        <jdbcConnection userId="etl_user"
                         password="123456"
                         driverClass="org.postgresql.Driver"
-                        connectionURL="jdbc:postgresql://192.168.50.195:3433/db_etl_server"/>
+                        connectionURL="jdbc:postgresql://192.168.33.67:3433/db_etl_server"/>
 
         <!-- 生成模型的包名和位置-->
         <javaModelGenerator targetPackage="cc.changic.platform.etl.base.model.db"
@@ -57,6 +57,9 @@
                <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
                <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
+        <!--<table schema="db_etl_server_0001" tableName="t_c_config_version" domainObjectName="ConfigVersion"-->
+        <!--enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
+        <!--enableSelectByExample="false" selectByExampleQueryId="false"/>-->
 
     </context>
 </generatorConfiguration>

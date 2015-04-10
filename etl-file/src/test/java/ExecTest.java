@@ -14,6 +14,12 @@ import static org.junit.Assert.assertFalse;
 public class ExecTest {
 
     @Test
+    public void deleteFileTest(){
+        File file = new File("E:\\gamelog\\mobile_game\\1\\log_login\\log_login_1.2015-02-10.0100");
+        System.out.println(file.exists());
+        System.out.println(file.delete());
+    }
+    @Test
     public void test() {
         try {
 //            Executor exec = new DefaultExecutor();

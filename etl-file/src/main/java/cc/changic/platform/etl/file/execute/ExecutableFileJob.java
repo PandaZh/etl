@@ -22,6 +22,7 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     private ODSConfig odsConfig;
     private FileTask fileTask;
     private Job job;
+    private ConfigVersion version;
 
     // 根据构造函数数据计算出的数据
     private String fileName;
@@ -32,12 +33,13 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     // 增量拉取时每次增量的字节数
     private long incrementalOffset;
 
-    public ExecutableFileJob(App app, GameZone gameZone, FileTask fileTask, Job job, ODSConfig odsConfig) {
+    public ExecutableFileJob(App app, GameZone gameZone, FileTask fileTask, Job job, ODSConfig odsConfig, ConfigVersion version) {
         this.app = app;
         this.gameZone = gameZone;
         this.fileTask = fileTask;
         this.job = job;
         this.odsConfig = odsConfig;
+        this.version = version;
     }
 
     @Override
@@ -78,6 +80,11 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     @Override
     public GameZoneKey getGameZoneKey() {
         return new GameZoneKey(job.getAppId(), job.getGameZoneId());
+    }
+
+    @Override
+    public ConfigVersion getConfigVersion() {
+        return version;
     }
 
     public App getApp() {
