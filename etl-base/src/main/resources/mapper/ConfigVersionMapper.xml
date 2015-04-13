@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cc.changic.platform.etl.base.dao.ConfigVersionMapper">
+    <resultMap id="BaseResultMap" type="cc.changic.platform.etl.base.model.db.ConfigVersion">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="modify_time" property="modifyTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+      id, modify_time
+    </sql>
+
+    <select id="selectLatest" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_c_config_version
+        where id = (SELECT MAX(id) FROM t_c_config_version)
+    </select>
+</mapper>

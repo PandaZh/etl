@@ -223,7 +223,6 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     if (tmpFile.exists()) {
                         logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
                         jobService.onFailed(reJob, "已存在文件:" + tmpFile.getAbsolutePath());
-                        doError = true;
                         ctx.close();
                         return;
                     }

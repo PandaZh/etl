@@ -86,8 +86,8 @@ public class ConfigCache {
             jobMap.put(job.getId(), job);
             logger.info("Cached job:{}", job.toString());
         }
-
-        logger.info("Cached ETL schedule configurations!");
+        Integer[] sizeDesc = new Integer[]{apps.size(), gameZones.size(), odsConfigs.size(), taskFiles.size(), jobs.size()};
+        logger.info("Cached ETL schedule configurations! APPSize={}, GameZoneSize={}, ODSSize={}, FileTaskSize={}, JobSize={}", sizeDesc);
         return false;
     }
 
