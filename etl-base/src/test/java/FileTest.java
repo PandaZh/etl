@@ -79,4 +79,26 @@ public class FileTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testDeleteOldFile(){
+        File sourceFile = new File("E:\\data\\gamelog\\1\\login", "log_login_1.2015-02-15.1500");
+        LogFileUtil.deleteTooOldFile(sourceFile, 48);
+    }
+
+    @Test
+    public void timeTest(){
+        Calendar instance = Calendar.getInstance();
+        System.out.println(instance.getTime().getTime());
+        instance.add(Calendar.HOUR, -1);
+        System.out.println(instance.getTime().getTime());
+        instance.add(Calendar.HOUR, 1);
+        System.out.println(instance.getTime().getTime());
+
+        Calendar instance1 = Calendar.getInstance();
+        instance1.add(Calendar.HOUR, -1);
+
+        System.out.println(instance.compareTo(instance1));
+
+    }
 }

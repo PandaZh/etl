@@ -141,6 +141,10 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             // 设置MD5
             fileJob.setMd5(MD5Checksum.getFileMD5Checksum(sourceFile.getAbsolutePath()));
             fileJob.getJob().setStatus(ExecutableJob.SUCCESS);
+            Short fileDeleteInterval = fileJob.getGameZone().getFileDeleteInterval();
+            // 删除过老的文件
+            if (null != fileDeleteInterval && fileDeleteInterval > 0)
+                LogFileUtil.deleteTooOldFile(sourceFile, fileDeleteInterval);
         } catch (Exception e) {
             logger.error("Get source file error: {}", e.getMessage(), e);
             fileJob.getJob().setStatus(ExecutableJob.FAILED);
@@ -275,7 +279,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
         try {
             targetFile = new File(reJob.getStorageDir(), reJob.getFileName());
             // 判断配置是否在重新加载、判断携带版本号是否正确
-            if (jobService.canUpdate(reJob)){
+            if (jobService.canUpdate(reJob)) {
                 // 校验MD5
                 if (reJob.getMd5().equalsIgnoreCase(MD5Checksum.getFileMD5Checksum(targetFile.getAbsolutePath()))) {
                     try {

@@ -80,6 +80,16 @@ public class GameZone extends GameZoneKey implements Serializable {
 
     private Short gameZoneStatus;
 
+    private Short fileDeleteInterval;
+
+    public Short getFileDeleteInterval() {
+        return fileDeleteInterval;
+    }
+
+    public void setFileDeleteInterval(Short fileDeleteInterval) {
+        this.fileDeleteInterval = fileDeleteInterval;
+    }
+
     public Short getGameZoneStatus() {
         return gameZoneStatus;
     }

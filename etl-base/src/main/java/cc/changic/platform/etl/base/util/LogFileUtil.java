@@ -2,6 +2,8 @@ package cc.changic.platform.etl.base.util;
 
 import cc.changic.platform.etl.base.model.db.Job;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,6 +18,8 @@ import java.util.regex.Pattern;
  * 日志文件工具类
  */
 public class LogFileUtil {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(LogFileUtil.class);
 
     public final static String IDR_REGEX = "\\{(.+?)\\}";
     public final static Pattern DIR_PATTERN = Pattern.compile(IDR_REGEX);
@@ -173,6 +177,52 @@ public class LogFileUtil {
         if (fileName.length() <= ("." + TimeUtil.LOG_FILE_SUFFIX_FORMAT).length())
             return null;
         return fileName.substring(0, fileName.length() - ("." + TimeUtil.LOG_FILE_SUFFIX_FORMAT).length());
+    }
+
+    /**
+     * 删除源文件所在文件夹下的比较老的文件
+     *
+     * @param sourceFile     源文件
+     * @param deleteInterval 时间间隔(单位:分钟)
+     */
+    public static void deleteTooOldFile(File sourceFile, int deleteInterval) {
+        try {
+            // 计算需要删除的最小时间
+            Date timestamp = getLogFileTimestamp(sourceFile.getAbsolutePath());
+            Calendar limitTime = Calendar.getInstance();
+            limitTime.setTime(timestamp);
+            limitTime.add(Calendar.HOUR, -deleteInterval);
+            String logSuffix = TimeUtil.getLogSuffix(limitTime.getTime());
+
+            // 获取简单文件名
+            String baseName = getLogFileBaseName(sourceFile.getName());
+            if (null == baseName)
+                throw new NullPointerException("删除老文件时,获取文件名为空:file=" + sourceFile.getAbsolutePath());
+            // 遍历文件
+            File parentFile = sourceFile.getParentFile();
+            File[] files = parentFile.listFiles();
+            for (File file : files) {
+                Calendar tmpLimitTime;
+                try {
+                    tmpLimitTime = Calendar.getInstance();
+                    tmpLimitTime.setTime(getLogFileTimestamp(file.getAbsolutePath()));
+                } catch (ParseException e) {
+                    LOGGER.error("删除老文件时,解析文件时间后缀异常:{}", e.getMessage(), e);
+                    continue;
+                }
+                if (tmpLimitTime.compareTo(limitTime) > 0)
+                    continue;
+                String tmpName = getLogFileBaseName(file.getName());
+                if (null == tmpName)
+                    continue;
+                if (!tmpName.equals(baseName))
+                    continue;
+                file.delete();
+                LOGGER.info("删除老文件:file_name={}", file.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            LOGGER.error("删除老文件是异常:{}", e.getMessage(), e);
+        }
     }
 }
 
