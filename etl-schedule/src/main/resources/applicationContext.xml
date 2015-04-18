@@ -64,7 +64,7 @@
 
     <!-- netty客户端，用于连接远程服务器拉取数据-->
     <bean class="cc.changic.platform.etl.schedule.net.Client" scope="prototype">
-        <constructor-arg name="port" value="10000"/>
+        <constructor-arg name="port" value="7999"/>
     </bean>
 
     <!-- netty相关配置-->

@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -45,6 +46,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
     private final static AtomicBoolean INITIALIZED = new AtomicBoolean(false);
     private final static AtomicBoolean START_VERSION_MONITORING = new AtomicBoolean(false);
     private final static AtomicBoolean IS_RELOADING = new AtomicBoolean(false);
+    private final static AtomicInteger JOB_COUNT = new AtomicInteger(0);
 
     private Logger logger = LoggerFactory.getLogger(ETLSchedulerImpl.class);
 
@@ -78,8 +80,8 @@ public class ETLSchedulerImpl implements ETLScheduler {
                 logger.info("Initialize ETL scheduler configuration");
                 // 初始化工作队列
                 queueMap.clear();
-                scheduler.start();
-                scheduler.resumeAll();
+//                scheduler.start();
+//                scheduler.resumeAll();
                 Map<Integer, Job> jobMap = cache.getJobMap();
                 for (Job etlJob : jobMap.values()) {
                     addJob(etlJob);
@@ -125,9 +127,10 @@ public class ETLSchedulerImpl implements ETLScheduler {
     public void clear() {
         try {
             logger.info("Clear ETL scheduler configuration");
-            scheduler.pauseAll();
-            scheduler.clear();
+//            scheduler.pauseAll();
+            // 确保队列在调度器之前重置
             queueMap.clear();
+            scheduler.clear();
             INITIALIZED.set(false);
         } catch (Exception e) {
             logger.error("Clear configuration error:{}", e.getMessage(), e);
@@ -202,23 +205,24 @@ public class ETLSchedulerImpl implements ETLScheduler {
      */
     private boolean scheduleJob(ExecutableJob job) {
         try {
+            Integer jobID = job.getJobID();
+            int jobCount = JOB_COUNT.incrementAndGet();
+            String jobDesc = "[job_id=" + jobID + ", job_count=" + jobCount + "]";
             // 使用GameZoneKey.toString()作为调度组名
             GameZoneKey gameZoneKey = job.getGameZoneKey();
-            logger.info("Schedule job queue={}, job={}", gameZoneKey, job.toString());
             String groupName = gameZoneKey.toString();
             // 设置调度任务所需的数据
             JobDataMap dataMap = new JobDataMap(new HashMap<String, Object>());
             dataMap.put(DataJob.ETL_JOB_KEY, job);
             dataMap.put(DataJob.SPRING_CONTEXT_KEY, context);
             dataMap.put(DataJob.JOB_SERVICE, jobService);
-            Integer jobID = job.getJobID();
             // 创建调度任务
-            JobDetail jobDetail = newJob(DataJob.class).withIdentity("Job[" + jobID + "]", groupName).build();
+            JobDetail jobDetail = newJob(DataJob.class).withIdentity("Job" + jobDesc, groupName).build();
             // 创建触发器
             Trigger trigger;
             if (null == job.getNextTime()) {
                 trigger = newTrigger()
-                        .withIdentity("Trigger[" + jobID + "]", groupName)
+                        .withIdentity("Trigger" + jobDesc, groupName)
                         .usingJobData(dataMap)
                         .startNow()
                         .build();
@@ -232,15 +236,21 @@ public class ETLSchedulerImpl implements ETLScheduler {
                     nextTime = now;
                 }
                 trigger = newTrigger()
-                        .withIdentity("Trigger[" + jobID + "]", groupName)
+                        .withIdentity("Trigger" + jobDesc, groupName)
                         .usingJobData(dataMap)
                         .startAt(nextTime.getTime())
                         .build();
             }
-            Set<Trigger> triggers = Sets.newHashSet();
-            triggers.add(trigger);
+//            Set<Trigger> triggers = Sets.newHashSet();
+//            triggers.add(trigger);
             if (!IS_RELOADING.get()) {
-                scheduler.scheduleJob(jobDetail, triggers, true);
+                logger.info("Schedule job queue={}, job={}", gameZoneKey, job.toString());
+//                if (scheduler.checkExists(jobDetail.getKey())) {
+//                    logger.info("删除JOB,job={}, job_key={}", job.toString(), jobDetail.getKey());
+//                    scheduler.deleteJob(jobDetail.getKey());
+//                }
+                scheduler.scheduleJob(jobDetail, trigger);
+//                scheduler.scheduleJob(jobDetail, triggers, true);
                 return true;
             }
         } catch (Exception e) {

@@ -1,4 +1,4 @@
-//package cc.changic.platform.etl.schedule.test;
+//package cc.changic.test;
 //
 //import cc.changic.platform.etl.protocol.dispatcher.MessageDispatcher;
 //import org.quartz.*;

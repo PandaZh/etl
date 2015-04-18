@@ -3,6 +3,7 @@ package cc.changic.platform.etl.schedule;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
 import cc.changic.platform.etl.protocol.dispatcher.MessageDispatcher;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
+import cc.changic.platform.etl.schedule.listener.ETLJobListener;
 import cc.changic.platform.etl.schedule.scheduler.ETLSchedulerImpl;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -57,7 +58,9 @@ public class ETLBootstrap {
         try {
             context = new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
             context.getBean(MessageDispatcher.class);
-            context.getBean(Scheduler.class);
+            Scheduler scheduler = context.getBean(Scheduler.class);
+            scheduler.getListenerManager().addJobListener(new ETLJobListener());
+            scheduler.start();
         } catch (Exception e) {
             logger.error("{}", e.getMessage(), e);
             if (null != context)

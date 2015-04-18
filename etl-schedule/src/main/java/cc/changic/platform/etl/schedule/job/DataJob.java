@@ -36,6 +36,7 @@ public class DataJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+
         JobDataMap dataMap = context.getMergedJobDataMap();
 
         Object tmpSpringContext = dataMap.get(SPRING_CONTEXT_KEY);

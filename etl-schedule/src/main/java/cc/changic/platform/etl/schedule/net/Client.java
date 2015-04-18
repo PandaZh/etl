@@ -43,6 +43,7 @@ public class Client {
             b.group(group)
                     .channel(NioSocketChannel.class)
                     .handler(messageHandlerInitializer);
+            logger.info("Connect remote server: [host={}, port={}]", host, port);
             ChannelFuture future = b.connect(host, port).sync();
             Channel channel = future.channel();
             channel.writeAndFlush(message);

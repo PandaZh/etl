@@ -104,6 +104,11 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     @Override
     public void read(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
         ETLMessageHeader header = message.getHeader();
+        if (null == message.getBody())
+            throw new ETLException("Request message body can not be null");
+        if (!(message.getBody() instanceof ExecutableFileJob))
+            throw new ETLException("Request message body must be instance of " + ExecutableFileJob.class);
+        this.message = message;
         if (header.getMessageType() == REQUEST.type()) {
             doRequest(message);
         } else {
@@ -112,11 +117,6 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     }
 
     private void doRequest(ETLMessage message) throws Exception {
-        if (null == message.getBody())
-            throw new ETLException("Request message body can not be null");
-        if (!(message.getBody() instanceof ExecutableFileJob))
-            throw new ETLException("Request message body must be instance of " + ExecutableFileJob.class);
-        this.message = message;
         ExecutableFileJob fileJob = (ExecutableFileJob) message.getBody();
         try {
             File sourceFile = getSourceFile(fileJob);
@@ -320,15 +320,18 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             }
         }
         if (!success && null != targetFile && targetFile.exists()) {
-            System.out.println(targetFile.delete());
+            targetFile.delete();
         }
     }
 
     @Override
     public void handlerNettyException(String errorMessage) {
-        if (null != jobService) {
+        logger.error("do error in message");
+        try {
             ExecutableFileJob job = (ExecutableFileJob) message.getBody();
-            jobService.onFailed(reJob, "Netty异常,File=" + job.getFileTask().getTaskName() + "[" + errorMessage + "]");
+            jobService.onFailed(job, "Netty异常,File=" + job.getFileTask().getTaskName() + "[" + errorMessage + "]");
+        } catch (Exception e) {
+            logger.error("do error in message error:{}", e.getMessage(), e);
         }
     }
 }

@@ -60,20 +60,30 @@ public abstract class JobService {
      * @return true(可以)/false(不可以)
      */
     public final boolean canUpdate(ExecutableJob job) {
-        if (null == scheduler)
+        if (null == scheduler){
+            logger.warn("不可更新本地数据:Scheduler为null");
             return false;
-        if (!scheduler.isReloading())
+        }
+        if (scheduler.isReloading()){
+            logger.warn("不可更新本地数据:Scheduler正在重新加载配置");
             return false;
-        if (null == scheduler.getCurrentVersion())
+        }
+        if (null == scheduler.getCurrentVersion()){
+            logger.warn("不可更新本地数据:Scheduler当前版本配置为null");
             return false;
-        if (null == job)
+        }
+        if (null == job){
+            logger.warn("不可更新本地数据:Job为null");
             return false;
-        if (null == job.getConfigVersion())
+        }
+        if (null == job.getConfigVersion()){
+            logger.warn("不可更新本地数据:Job版本配置为null");
             return false;
+        }
         if (job.getConfigVersion().equals(scheduler.getCurrentVersion()))
             return true;
         else
-            logger.warn("配置版本不匹配:当前版本{},携带版本{}", scheduler.getCurrentVersion(), job.getConfigVersion());
+            logger.warn("不可更新本地数据:配置版本不匹配当前版本{},携带版本{}", scheduler.getCurrentVersion(), job.getConfigVersion());
         return false;
     }
 
