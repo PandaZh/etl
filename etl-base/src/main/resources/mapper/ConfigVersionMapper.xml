@@ -4,10 +4,11 @@
     <resultMap id="BaseResultMap" type="cc.changic.platform.etl.base.model.db.ConfigVersion">
         <id column="id" property="id" jdbcType="INTEGER"/>
         <result column="modify_time" property="modifyTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-      id, modify_time
+      id, modify_time, status
     </sql>
 
     <select id="selectLatest" resultMap="BaseResultMap">
@@ -16,4 +17,11 @@
         from t_c_config_version
         where id = (SELECT MAX(id) FROM t_c_config_version)
     </select>
+
+    <update id="updateByPrimaryKey" parameterType="cc.changic.platform.etl.base.model.db.ConfigVersion">
+        update t_c_config_version
+        set modify_time = #{modifyTime,jdbcType=TIMESTAMP},
+        status = #{status,jdbcType=INTEGER}
+        where id = #{id,jdbcType=INTEGER}
+    </update>
 </mapper>

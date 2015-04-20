@@ -47,6 +47,7 @@ public class Client {
             ChannelFuture future = b.connect(host, port).sync();
             Channel channel = future.channel();
             channel.writeAndFlush(message);
+            channel.closeFuture().sync();
         } catch (Exception e) {
             logger.error("Netty client exception: {}", e.getMessage(), e);
 //            group.shutdownGracefully();

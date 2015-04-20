@@ -38,7 +38,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>E:/logs/sdk/error.%d{yyyy-MM-dd}</FileNamePattern>
+            <FileNamePattern>E:/logs/e/error.%d{yyyy-MM-dd}</FileNamePattern>
             <MaxHistory>30</MaxHistory>
         </rollingPolicy>
     </appender>

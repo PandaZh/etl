@@ -51,7 +51,7 @@ public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
             if (null != handlerMessage) {
                 handlerMessage.read(ctx, message);
                 if (message.getHeader().isLastPackage())
-                    ctx.close();
+                    ctx.close().sync();
             } else {
                 throw new ETLException("Not found handler message in a response message sessionID=" + header.getSessionID());
             }
@@ -62,7 +62,7 @@ public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        ctx.close();
+        ctx.close().sync();
         logger.error("Netty exception: {}", cause.getMessage(), cause);
         DuplexMessage handlerMessage = getHandlerMessage(ctx, null);
         if (null != handlerMessage){

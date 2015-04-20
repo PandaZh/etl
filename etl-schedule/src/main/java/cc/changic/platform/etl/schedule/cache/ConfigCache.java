@@ -42,7 +42,7 @@ public class ConfigCache {
     private JobMapper jobMapper;
 
     public void init() {
-        caching();
+//        caching();
     }
 
     public void destroy() {

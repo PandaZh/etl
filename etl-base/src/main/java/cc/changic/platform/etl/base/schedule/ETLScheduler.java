@@ -16,14 +16,14 @@ public interface ETLScheduler {
     /**
      * 重新加载配置信息
      */
-    void reload();
+    void reload(boolean refreshVersion);
 
     /**
      * 判断是否正在加载配置信息
      *
      * @return true(正在加载)/false(加载完成)
      */
-    boolean isReloading();
+    boolean isLoading();
 
     /**
      * 清空配置信息
@@ -42,12 +42,5 @@ public interface ETLScheduler {
      * 获取当前内存中的配置版本
      */
     ConfigVersion getCurrentVersion();
-
-    /**
-     * 设置当前内存中的配置版本
-     *
-     * @param version 指定的版本号
-     */
-    void setCurrentVersion(ConfigVersion version);
 
 }

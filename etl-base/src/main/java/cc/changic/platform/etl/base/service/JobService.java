@@ -64,7 +64,7 @@ public abstract class JobService {
             logger.warn("不可更新本地数据:Scheduler为null");
             return false;
         }
-        if (scheduler.isReloading()){
+        if (scheduler.isLoading()){
             logger.warn("不可更新本地数据:Scheduler正在重新加载配置");
             return false;
         }

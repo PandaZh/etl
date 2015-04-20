@@ -64,7 +64,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     private ETLMessage message;
     private RandomAccessFile attachFile;
     private RandomAccessFile storageFile;
-
+    boolean doError = false;
     @Override
     public ETLMessage getMessage() {
         return message;
@@ -104,11 +104,6 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     @Override
     public void read(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
         ETLMessageHeader header = message.getHeader();
-        if (null == message.getBody())
-            throw new ETLException("Request message body can not be null");
-        if (!(message.getBody() instanceof ExecutableFileJob))
-            throw new ETLException("Request message body must be instance of " + ExecutableFileJob.class);
-        this.message = message;
         if (header.getMessageType() == REQUEST.type()) {
             doRequest(message);
         } else {
@@ -117,6 +112,11 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     }
 
     private void doRequest(ETLMessage message) throws Exception {
+        if (null == message.getBody())
+            throw new ETLException("Request message body can not be null");
+        if (!(message.getBody() instanceof ExecutableFileJob))
+            throw new ETLException("Request message body must be instance of " + ExecutableFileJob.class);
+        this.message = message;
         ExecutableFileJob fileJob = (ExecutableFileJob) message.getBody();
         try {
             File sourceFile = getSourceFile(fileJob);
@@ -210,7 +210,6 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
 
     private void doResponse(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
         // 附件中不带Body
-        boolean doError = false;
         if (null != message.getBody() && message.getBody() instanceof ExecutableFileJob) {
             this.message = message;
             reJob = (ExecutableFileJob) message.getBody();
@@ -225,6 +224,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     String storageDir = reJob.getStorageDir();
                     File tmpFile = new File(storageDir, reJob.getFileName());
                     if (tmpFile.exists()) {
+                        doError = true;
                         logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
                         jobService.onFailed(reJob, "已存在文件:" + tmpFile.getAbsolutePath());
                         ctx.close();
@@ -259,7 +259,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                             buf.release();
                     }
                 }
-            } else {
+            } else if (!doError) {
                 logger.error("Write file error, not init storage file: job_id={}", reJob.getJob().getId());
                 jobService.onFailed(reJob, "未初始化用于写入的文件." + this.toString());
                 doError = true;

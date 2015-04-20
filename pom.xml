@@ -10,6 +10,7 @@
         <module>etl-terminal</module>
         <module>etl-schedule</module>
         <module>etl-base</module>
+        <module>etl-job-producer</module>
         <!--<module>etl-model</module>-->
         <!--<module>etl-db</module>-->
     </modules>

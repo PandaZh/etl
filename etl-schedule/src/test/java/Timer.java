@@ -29,6 +29,8 @@ public class Timer {
         Integer minute = instance.get(Calendar.MINUTE);
 
         System.out.println(minute - (minute / 10) * 10);
+
+        System.out.println(false | false);
     }
     @Test
     public void scheduler() {

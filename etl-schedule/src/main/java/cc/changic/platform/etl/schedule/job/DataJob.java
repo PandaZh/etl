@@ -43,11 +43,9 @@ public class DataJob implements Job {
         Assert.notNull(tmpSpringContext, "Spring context is null");
         Assert.isInstanceOf(ConfigurableApplicationContext.class, tmpSpringContext);
 
-
         Object tmpExecutableJob = dataMap.get(ETL_JOB_KEY);
         Assert.notNull(tmpExecutableJob, "Executable Job is null");
         Assert.isInstanceOf(ExecutableJob.class, tmpExecutableJob);
-
 
         Object tmpJobService = dataMap.get(JOB_SERVICE);
         Assert.notNull(tmpJobService, "Job Service is null");
@@ -66,7 +64,7 @@ public class DataJob implements Job {
                 ETLMessage etlMessage = new ETLMessage();
                 etlMessage.setBody(fileJob);
                 etlMessage.setHeader(new ETLMessageHeader());
-                DuplexMessage handler = null;
+                DuplexMessage handler;
                 if (jobType == FileJobType.FILE_JOB_TYPE_FULL) {
                     handler = springContext.getBean(FullFileTaskMessageHandler.class);
                 } else if (jobType == FileJobType.FILE_JOB_TYPE_INCREMENTAL) {
@@ -80,7 +78,7 @@ public class DataJob implements Job {
                 client.write(fileJob.getClientIP(), handler);
             }
         } catch (Exception e) {
-            if (notSupport){
+            if (!notSupport){
                 try {
                     jobService.onFailed(executableJob, e.getMessage());
                 } catch (Exception e1) {

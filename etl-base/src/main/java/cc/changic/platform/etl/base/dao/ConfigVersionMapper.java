@@ -11,4 +11,11 @@ public interface ConfigVersionMapper {
      */
     ConfigVersion selectLatest();
 
+    /**
+     * 修改配置版本状态
+     *
+     * @param record 配置版本
+     * @return 受影响的记录数
+     */
+    int updateByPrimaryKey(ConfigVersion record);
 }
