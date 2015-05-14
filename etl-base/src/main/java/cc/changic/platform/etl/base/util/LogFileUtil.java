@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 public class LogFileUtil {
 
     private static Logger LOGGER = LoggerFactory.getLogger(LogFileUtil.class);
+    private static Logger DELETE_LOGGER = LoggerFactory.getLogger("delete");
 
     public final static String IDR_REGEX = "\\{(.+?)\\}";
     public final static Pattern DIR_PATTERN = Pattern.compile(IDR_REGEX);
@@ -206,8 +207,7 @@ public class LogFileUtil {
                 try {
                     tmpLimitTime = Calendar.getInstance();
                     tmpLimitTime.setTime(getLogFileTimestamp(file.getAbsolutePath()));
-                } catch (ParseException e) {
-                    LOGGER.error("删除老文件时,解析文件时间后缀异常:{}", e.getMessage(), e);
+                } catch (Exception e) {
                     continue;
                 }
                 if (tmpLimitTime.compareTo(limitTime) > 0)
@@ -218,10 +218,11 @@ public class LogFileUtil {
                 if (!tmpName.equals(baseName))
                     continue;
                 file.delete();
-                LOGGER.info("删除老文件:file_name={}", file.getAbsolutePath());
+                DELETE_LOGGER.info("Delete old file:[file_name={}, delete_interval={}, current_log_time={}]", file.getAbsolutePath(), deleteInterval, logSuffix);
+                LOGGER.info("删除老文件:file_name={}, deleteInterval={}", file.getAbsolutePath(), deleteInterval);
             }
         } catch (Exception e) {
-            LOGGER.error("删除老文件是异常:{}", e.getMessage(), e);
+            LOGGER.error("删除老文件时异常:{}", e.getMessage(), e);
         }
     }
 }
