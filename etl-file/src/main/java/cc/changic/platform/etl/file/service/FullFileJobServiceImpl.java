@@ -48,7 +48,6 @@ public class FullFileJobServiceImpl extends JobService {
             job = fileJob.getJob();
             job.setStatus(ExecutableJob.SUCCESS);
             String fileName = new File(fileJob.getSourceDir(), fileJob.getFileName()).getAbsolutePath();
-            job.setOptionDesc("File=[" + fileName + "], desc=[" + desc + "]");
             job.setModifyTime(new Date());
             // 计算最后记录时间
             Date logTime;
@@ -71,6 +70,8 @@ public class FullFileJobServiceImpl extends JobService {
             calendar.set(Calendar.MINUTE, 0);
             calendar.add(Calendar.MINUTE, executableJob.getNextInterval() + random());
             job.setNextTime(calendar.getTime());
+            String tmpDesc = "File=[" + fileName + "], desc=[" + desc + "], next_time=[" + TimeUtil.getISOTime(job.getNextTime()) + "], last_record_time=[" + TimeUtil.getISOTime(job.getLastRecordTime()) + "]";
+            job.setOptionDesc(tmpDesc);
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, executableJob.getJobType());
             logMapper.insert(jobLog);
@@ -111,7 +112,7 @@ public class FullFileJobServiceImpl extends JobService {
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, executableJob.getJobType());
             logMapper.insert(jobLog);
-            success =true;
+            success = true;
         } catch (Exception e) {
             logger.error("{}", e.getMessage(), e);
         }

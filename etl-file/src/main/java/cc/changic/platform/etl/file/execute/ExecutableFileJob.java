@@ -2,9 +2,13 @@ package cc.changic.platform.etl.file.execute;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
 import cc.changic.platform.etl.base.model.db.*;
+import cc.changic.platform.etl.base.util.TimeUtil;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -112,9 +116,10 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
         return getGameZone().getEtlClientIp();
     }
 
-    public String getFileName() {
+    public String getFileName() throws ParseException {
         if (Strings.isNullOrEmpty(fileName)) {
-            fileName = getNextLogFileName(getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), getJob().getLastRecordTime());
+            LoggerFactory.getLogger("test").info("测试;;;;{},{},{},{}",getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), getJob().getLastRecordTimeStr());
+            fileName = getNextLogFileName(getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), TimeUtil.dateTime(getJob().getLastRecordTimeStr()));
         }
         return fileName;
     }

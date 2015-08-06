@@ -170,8 +170,8 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 logger.info("Calculated job source file: job_id={}, source_dir={}, file_name={}", fileJob.getJob().getId(), sourceDir, fileName);
                 sourceFile = new File(sourceDir, fileName);
                 // 服务器停机文件空档处理
-                Date lastRecordTime = fileJob.getJob().getLastRecordTime();
                 if (!sourceFile.exists()) {
+                    Date lastRecordTime = fileJob.getJob().getLastRecordTime();
                     String baseName = LogFileUtil.getLogFileBaseName(sourceFile.getAbsolutePath());
                     if (!Strings.isNullOrEmpty(baseName)) {
                         File baseFile = new File(baseName);

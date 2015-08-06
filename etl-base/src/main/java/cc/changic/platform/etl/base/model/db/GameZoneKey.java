@@ -57,4 +57,9 @@ public class GameZoneKey {
                 ", gameZoneId=" + gameZoneId +
                 ']';
     }
+
+    public static void main(String[] args) {
+        System.out.println(new GameZoneKey(1, 1) == new GameZoneKey(1, 1));
+        System.out.println(new GameZoneKey(1, 1).equals(new GameZoneKey(1, 1)));
+    }
 }

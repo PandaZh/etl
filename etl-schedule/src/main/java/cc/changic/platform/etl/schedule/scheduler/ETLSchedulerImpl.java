@@ -10,6 +10,7 @@ import cc.changic.platform.etl.base.model.db.GameZoneKey;
 import cc.changic.platform.etl.base.model.db.Job;
 import cc.changic.platform.etl.base.schedule.ETLScheduler;
 import cc.changic.platform.etl.base.service.JobService;
+import cc.changic.platform.etl.base.util.TimeUtil;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.schedule.cache.ConfigCache;
@@ -101,7 +102,7 @@ public class ETLSchedulerImpl implements ETLScheduler {
                 }
                 LOADING.set(false);
                 PRE_LOAD.set(false);
-                if (refreshVersion){
+                if (refreshVersion) {
                     configVersion.setStatus(VersionJob.AFTER_LOADED);
                     versionMapper.updateByPrimaryKey(configVersion);
                 }
@@ -140,6 +141,8 @@ public class ETLSchedulerImpl implements ETLScheduler {
     }
 
     private ExecutableJob addJob(Job job) {
+        if (null != job.getLastRecordTime())
+            job.setLastRecordTimeStr(TimeUtil.dateTime(job.getLastRecordTime()));
         // 工作队列按照游戏区分组
         GameZoneKey gameZoneKey = new GameZoneKey(job.getAppId(), job.getGameZoneId());
         // 使用优先级队列,时间越小优先级越高
@@ -165,6 +168,8 @@ public class ETLSchedulerImpl implements ETLScheduler {
         cacheJob.setStatus(job.getStatus());
         cacheJob.setNextTime(job.getNextTime());
         cacheJob.setLastRecordTime(job.getLastRecordTime());
+        if (null != job.getLastRecordTime())
+            cacheJob.setLastRecordTimeStr(TimeUtil.dateTime(job.getLastRecordTime()));
         cacheJob.setLastRecordId(job.getLastRecordId());
         cacheJob.setLastRecordOffset(job.getLastRecordOffset());
         ExecutableJob executableJob = addJob(job);
