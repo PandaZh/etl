@@ -65,6 +65,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     private RandomAccessFile attachFile;
     private RandomAccessFile storageFile;
     boolean doError = false;
+
     @Override
     public ETLMessage getMessage() {
         return message;
@@ -224,11 +225,17 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     String storageDir = reJob.getStorageDir();
                     File tmpFile = new File(storageDir, reJob.getFileName());
                     if (tmpFile.exists()) {
-                        doError = true;
-                        logger.error("Write file error: exists file [{}]", tmpFile.getAbsolutePath());
-                        jobService.onFailed(reJob, "已存在文件:" + tmpFile.getAbsolutePath());
-                        ctx.close();
-                        return;
+                        boolean deleted = tmpFile.delete();
+                        // 当文件存在，并且删除失败的时候，做错误处理，删除失败的原因可能是权限问题
+                        if (!deleted){
+                            doError = true;
+                            logger.error("Write file error: exists file but can not delete, file=[{}]", tmpFile.getAbsolutePath());
+                            jobService.onFailed(reJob, "已存在文件:" + tmpFile.getAbsolutePath());
+                            ctx.close();
+                            return;
+                        }else{
+                            logger.info("Delete file on full file task response, file={}", tmpFile.getAbsolutePath());
+                        }
                     }
                     if (!tmpFile.getParentFile().exists())
                         Files.createParentDirs(tmpFile);

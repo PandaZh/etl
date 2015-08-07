@@ -4,7 +4,8 @@ package cc.changic.platform.etl.protocol.anotation;
 import java.lang.annotation.*;
 
 /**
- * Created by Panda.Z on 2015/1/19.
+ * 消息处理类型注解
+ * @author Panda.Z
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

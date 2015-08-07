@@ -14,9 +14,13 @@ import static org.junit.Assert.assertFalse;
 public class ExecTest {
 
     @Test
-    public void deleteFileTest(){
-
+    public void longTest(){
+        Long a = 1000l;
+        Long b = 10000l;
+        System.out.println(a - b);
     }
+
+
     @Test
     public void test() {
         try {
@@ -28,9 +32,9 @@ public class ExecTest {
 //            CommandLine cl = CommandLine.parse("cmd /c python E:/indb.py asdf");
 ////            CommandLine cl = CommandLine.parse("cmd /c dir");
 //            exec.execute(cl);
-            Map<String, Integer> json = new Gson().fromJson("{\"code\":1}", new TypeToken<Map<String, Integer>>() {
-            }.getType());
-            System.out.println(json.get("code"));
+//            Map<String, Integer> json = new Gson().fromJson("{\"code\":1}", new TypeToken<Map<String, Integer>>() {
+//            }.getType());
+//            System.out.println(json.get("code"));
         } catch (Exception e) {
             e.printStackTrace();
         }

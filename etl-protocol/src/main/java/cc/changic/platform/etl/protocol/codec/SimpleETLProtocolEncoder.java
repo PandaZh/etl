@@ -77,6 +77,8 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
         } catch (Exception e) {
             logger.error("Encode body error:{}", e.getMessage(), e);
             throw e;
+        }catch (Throwable t){
+            logger.error("Encode body error:{}", t.getMessage(), t);
         }
         ByteBuf chunkHeader = null;
         try {

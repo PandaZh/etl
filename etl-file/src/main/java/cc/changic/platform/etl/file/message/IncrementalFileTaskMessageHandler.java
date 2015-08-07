@@ -126,6 +126,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 if (attachOffset > attachFile.length())
                     attachOffset = 0l;
                 incrementalOffset = attachFile.length() - attachOffset;
+                logger.info("Found source file [job_id={}, source_file={}, fileLength={}, lastRecordOffset={}, incrementalOffset={}]", fileJob.getJobID(), sourceFile.getAbsolutePath(), attachFile.length(), attachOffset, incrementalOffset);
                 if (incrementalOffset == 0) {
                     // 设置文件名
                     fileJob.setFileName(sourceFile.getName());
@@ -140,7 +141,6 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                     fileJob.getJob().setStatus(ExecutableJob.SUCCESS);
                     fileJob.getJob().setLastRecordOffset(attachOffset);
                     fileJob.setIncrementalOffset(incrementalOffset);
-                    logger.info("Found source file [job_id={}, source_file={}]", fileJob.getJobID(), sourceFile.getAbsolutePath());
                 }
             } else {
                 fileJob.getJob().setStatus(ExecutableJob.FAILED);
@@ -166,6 +166,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             if (null != message.getBody()) {
                 this.message = message;
                 this.job = (ExecutableFileJob) message.getBody();
+                logger.info("Incremental task body response: [job_id={}, incrementalOffset={}]", job.getJobID(), job.getIncrementalOffset());
                 if (job.getJob().getStatus().equals(ExecutableJob.FAILED)) {
                     jobService.onFailed(job, "客户端错误:" + job.getJob().getOptionDesc());
                 } else if (job.getJob().getStatus().equals(ExecutableJob.NO_DATA_CHANGE)) {
@@ -187,6 +188,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
 //                    }
                 }
             } else {
+                logger.info("Incremental task attachment response: [job_id={}, incrementalOffset={}]", job.getJobID(), job.getIncrementalOffset());
                 if (null == message.getAttachment() || null == message.getAttachment().getData()) {
                     logger.error("Write file error, attachment is null: job_id={}", job.getJob().getId());
                     jobService.onFailed(job, "附件为空.");
