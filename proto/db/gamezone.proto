@@ -1,0 +1,18 @@
+option java_package = "cc.changic.platform.etl.base.model.db.proto";
+
+option java_outer_classname = "GameZoneProto";
+
+message GameZone {
+    required int32 id = 1;
+    required int32 appId = 2;
+    required int32 gameZoneId = 3;
+    optional string gameZoneName = 4;
+    required string etlClientIp = 5;
+    optional string dbIp = 6;
+    optional int32 dbPort = 7;
+    optional int32 timezone = 8 [default = 8];
+    optional string site = 9 [default = ""];
+    required int32 maxRunJob = 10;
+    required int32 gameZoneStatus = 11;
+    optional int32 fileDeleteInterval = 12 [default = 120];
+}

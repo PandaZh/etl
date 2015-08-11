@@ -1,5 +1,6 @@
 package cc.changic.platform.etl.protocol.codec;
 
+import cc.changic.platform.etl.protocol.FileJobProto;
 import cc.changic.platform.etl.protocol.codec.marshalling.ETLMarshallingDecoder;
 import cc.changic.platform.etl.protocol.dispatcher.MessageDispatcher;
 import cc.changic.platform.etl.protocol.exception.ETLException;
@@ -23,11 +24,11 @@ public class SimpleETLProtocolDecoder extends ByteToMessageDecoder {
 
     private Logger logger = LoggerFactory.getLogger(SimpleETLProtocolDecoder.class);
 
-    private ETLMarshallingDecoder marshallingDecoder;
-
-    public SimpleETLProtocolDecoder(ETLMarshallingDecoder marshallingDecoder) {
-        this.marshallingDecoder = marshallingDecoder;
-    }
+//    private ETLMarshallingDecoder marshallingDecoder;
+//
+//    public SimpleETLProtocolDecoder(ETLMarshallingDecoder marshallingDecoder) {
+//        this.marshallingDecoder = marshallingDecoder;
+//    }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
@@ -58,8 +59,12 @@ public class SimpleETLProtocolDecoder extends ByteToMessageDecoder {
             // decode body
             int hasBody = slice.readInt();
             if (hasBody == ETLMessageHeader.HAS_BODY) {
-                Object body = marshallingDecoder.decode(ctx, slice);
-                message.setBody(body);
+                int length = slice.readInt();
+                byte[] body = new byte[length];
+                int index = slice.readerIndex();
+                slice.readBytes(body, 0, length);
+                FileJobProto.FileJob fileJob = FileJobProto.FileJob.parseFrom(body);
+                message.setBody(fileJob);
             }
 
             // decode attachment

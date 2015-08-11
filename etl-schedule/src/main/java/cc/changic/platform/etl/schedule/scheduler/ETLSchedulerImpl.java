@@ -141,8 +141,6 @@ public class ETLSchedulerImpl implements ETLScheduler {
     }
 
     private ExecutableJob addJob(Job job) {
-        if (null != job.getLastRecordTime())
-            job.setLastRecordTimeStr(TimeUtil.dateTime(job.getLastRecordTime()));
         // 工作队列按照游戏区分组
         GameZoneKey gameZoneKey = new GameZoneKey(job.getAppId(), job.getGameZoneId());
         // 使用优先级队列,时间越小优先级越高
@@ -168,8 +166,6 @@ public class ETLSchedulerImpl implements ETLScheduler {
         cacheJob.setStatus(job.getStatus());
         cacheJob.setNextTime(job.getNextTime());
         cacheJob.setLastRecordTime(job.getLastRecordTime());
-        if (null != job.getLastRecordTime())
-            cacheJob.setLastRecordTimeStr(TimeUtil.dateTime(job.getLastRecordTime()));
         cacheJob.setLastRecordId(job.getLastRecordId());
         cacheJob.setLastRecordOffset(job.getLastRecordOffset());
         ExecutableJob executableJob = addJob(job);

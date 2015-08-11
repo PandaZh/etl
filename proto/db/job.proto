@@ -1,0 +1,18 @@
+option java_package = "cc.changic.platform.etl.base.model.db.proto";
+
+option java_outer_classname = "JobProto";
+
+message Job {
+    required int32 id = 1;
+    required int32 appId = 2;
+    required int32 gameZoneId = 3;
+    required string taskTable = 4;
+    required int32 taskId = 5;
+    optional int32 status = 6;
+    optional string modifyTime = 7;
+    optional string nextTime = 8;
+    optional string lastRecordTime = 9;
+    optional int64 lastRecordId = 10;
+    optional int64 lastRecordOffset = 11;
+    optional string optionDesc = 12;
+}

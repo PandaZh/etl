@@ -1,0 +1,4 @@
+#生成DB
+protoc.exe --java_out=../etl-base/src/main/java db/*.proto
+#生成filejob
+protoc.exe --java_out=../etl-protocol/src/main/java file_job.proto

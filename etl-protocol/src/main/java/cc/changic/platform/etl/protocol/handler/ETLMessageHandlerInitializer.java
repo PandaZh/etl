@@ -3,7 +3,6 @@ package cc.changic.platform.etl.protocol.handler;
 import cc.changic.platform.etl.protocol.codec.ETLMessageHandler;
 import cc.changic.platform.etl.protocol.codec.SimpleETLProtocolDecoder;
 import cc.changic.platform.etl.protocol.codec.SimpleETLProtocolEncoder;
-import cc.changic.platform.etl.protocol.codec.marshalling.MarshallingCodecFactory;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -15,13 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Created by Panda.Z on 2015/1/20.
+ * @author Panda.Z
  */
 @Component
 public class ETLMessageHandlerInitializer extends ChannelInitializer<SocketChannel> {
 
-    @Autowired
-    private MarshallingCodecFactory marshallingCodecFactory;
+//    @Autowired
+//    private MarshallingCodecFactory marshallingCodecFactory;
     @Autowired
     private ETLMessageHandler messageHandler;
     @Autowired
@@ -37,8 +36,13 @@ public class ETLMessageHandlerInitializer extends ChannelInitializer<SocketChann
 
         pipeline.addLast(new ChunkedWriteHandler());
 
-        pipeline.addLast(new SimpleETLProtocolDecoder(marshallingCodecFactory.buildMarshallingDecoder()));
-        pipeline.addLast(new SimpleETLProtocolEncoder(marshallingCodecFactory.buildMarshallingEncoder()));
+        pipeline.addLast(new SimpleETLProtocolDecoder());
+        pipeline.addLast(new SimpleETLProtocolEncoder());
+
+//        pipeline.addLast(new ProtobufVarint32FrameDecoder());
+//        pipeline.addLast(new ProtobufDecoder(FileJobProto.FileJob.getDefaultInstance()));
+//        pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
+//        pipeline.addLast(new ProtobufEncoder());
 
         pipeline.addLast(messageHandler);
     }

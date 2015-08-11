@@ -40,6 +40,7 @@
           p:configLocation="classpath:mybatis-config.xml"
           p:mapperLocations="classpath:mapper/*.xml"/>
 
+
     <!--spring与mybatis整合配置，扫描所有dao -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"
           p:basePackage="cc.changic.platform.etl.base.dao"
@@ -52,14 +53,11 @@
         <property name="jdbcUrl" value="${jdbc.url}"/>
         <property name="username" value="${jdbc.username}"/>
         <property name="password" value="${jdbc.password}"/>
-        <property name="idleConnectionTestPeriod" value="6"/>
-        <property name="idleMaxAge" value="240"/>
         <property name="maxConnectionsPerPartition" value="30"/>
         <property name="minConnectionsPerPartition" value="10"/>
         <property name="partitionCount" value="1"/>
         <property name="acquireIncrement" value="5"/>
         <property name="statementsCacheSize" value="100"/>
-        <property name="releaseHelperThreads" value="3"/>
     </bean>
 
     <!-- netty客户端，用于连接远程服务器拉取数据-->

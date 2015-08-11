@@ -1,11 +1,13 @@
 package cc.changic.platform.etl.protocol.codec;
 
+import cc.changic.platform.etl.protocol.FileJobProto;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.codec.marshalling.ETLMarshallingEncoder;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
 import cc.changic.platform.etl.protocol.message.OutputMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessageHeader;
+import com.google.protobuf.Message;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
@@ -26,11 +28,11 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
 
     private Logger logger = LoggerFactory.getLogger(SimpleETLProtocolEncoder.class);
 
-    private ETLMarshallingEncoder marshallingEncoder;
-
-    public SimpleETLProtocolEncoder(ETLMarshallingEncoder marshallingEncoder) {
-        this.marshallingEncoder = marshallingEncoder;
-    }
+//    private ETLMarshallingEncoder marshallingEncoder;
+//
+//    public SimpleETLProtocolEncoder(ETLMarshallingEncoder marshallingEncoder) {
+//        this.marshallingEncoder = marshallingEncoder;
+//    }
 
     @Override
     protected void encode(ChannelHandlerContext ctx, DuplexMessage msg, List<Object> out) throws Exception {
@@ -41,8 +43,8 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
         if (null == msg.getMessage().getHeader())
             msg.getMessage().setHeader(new ETLMessageHeader());
 
-        ETLMessage message = msg.getMessage();
-        ETLMessageHeader header = message.getHeader();
+        ETLMessage etlMessage = msg.getMessage();
+        ETLMessageHeader header = etlMessage.getHeader();
 
         // 如果是第一次请求消息,构造消息头
         if (header.getMessageType() == REQUEST.type()) {
@@ -53,31 +55,45 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
         }
         ByteBuf outBuf = null;
         try {
-            if (null != message.getBody()) {
+            if (null != etlMessage.getBody() && etlMessage.getBody() instanceof Message) {
+                Message message = (Message) etlMessage.getBody();
+                byte[] body = message.toByteArray();
                 // 消息头
-                outBuf = ctx.alloc().buffer(2048);
+                outBuf = ctx.alloc().buffer(20 + body.length);
                 outBuf.writeShort(header.getToken());
                 outBuf.writeLong(header.getSessionID());
                 outBuf.writeByte(header.getMessageType());
                 // 是否是最后一个包,如果有附件,至少会分成两个包发送
-                if (null == message.getAttachment())
+                // isLastPackage
+                if (null == etlMessage.getAttachment())
                     outBuf.writeBoolean(true);
                 else
                     outBuf.writeBoolean(false);
 
-                // 消息体
-                if (null != message.getBody()) {
-                    outBuf.writeInt(ETLMessageHeader.HAS_BODY);
-                    marshallingEncoder.encode(ctx, message.getBody(), outBuf);
-                } else {
-                    outBuf.writeInt(ETLMessageHeader.NO_BODY);
-                }
+                outBuf.writeInt(ETLMessageHeader.HAS_BODY);
+                outBuf.writeInt(body.length);
+                outBuf.writeBytes(body);
                 out.add(outBuf);
+//                // 消息体
+//                if (null != etlMessage.getBody()) {
+//                    outBuf.writeInt(ETLMessageHeader.HAS_BODY);
+//                    if (etlMessage.getBody() instanceof Message) {
+//
+//                    }
+//                    marshallingEncoder.encode(ctx, etlMessage.getBody(), outBuf);
+//                    FileJobProto.FileJob.Builder builder = FileJobProto.FileJob.newBuilder();
+//                    FileJobProto.FileJob build = builder.build();
+//                    build.toByteArray();
+//                    out.add(outBuf);
+//                } else {
+//                    outBuf.writeInt(ETLMessageHeader.NO_BODY);
+//                    out.add(outBuf);
+//                }
             }
         } catch (Exception e) {
             logger.error("Encode body error:{}", e.getMessage(), e);
             throw e;
-        }catch (Throwable t){
+        } catch (Throwable t) {
             logger.error("Encode body error:{}", t.getMessage(), t);
         }
         ByteBuf chunkHeader = null;
@@ -87,6 +103,7 @@ public class SimpleETLProtocolEncoder extends MessageToMessageEncoder<DuplexMess
             chunkHeader.writeLong(header.getSessionID());
             chunkHeader.writeByte(header.getMessageType());
             // 是否是最后一个包
+            // isLastPackage
             chunkHeader.writeBoolean(false);
             // 是否有body,分片附件中不包含消息体,只包含消息头
             chunkHeader.writeInt(ETLMessageHeader.NO_BODY);

@@ -1,11 +1,15 @@
 package cc.changic.platform.etl.schedule.job;
 
 import cc.changic.platform.etl.base.model.ExecutableJob;
+import cc.changic.platform.etl.base.model.db.*;
+import cc.changic.platform.etl.base.model.db.proto.*;
 import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.file.commom.FileJobType;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
+import cc.changic.platform.etl.file.execute.FileJobTransformer;
 import cc.changic.platform.etl.file.message.FullFileTaskMessageHandler;
 import cc.changic.platform.etl.file.message.IncrementalFileTaskMessageHandler;
+import cc.changic.platform.etl.protocol.FileJobProto;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
 import cc.changic.platform.etl.protocol.rmi.ETLMessage;
@@ -24,6 +28,7 @@ import java.util.PriorityQueue;
 
 /**
  * 数据拉取任务
+ *
  * @author Panda.Z
  */
 public class DataJob implements Job {
@@ -59,8 +64,9 @@ public class DataJob implements Job {
         try {
             // 暂时只处理文件任务
             if (tmpExecutableJob instanceof ExecutableFileJob) {
-                ExecutableFileJob fileJob = (ExecutableFileJob) tmpExecutableJob;
-                Short jobType = fileJob.getJobType();
+                ExecutableFileJob tmpFileJob = (ExecutableFileJob) tmpExecutableJob;
+                FileJobProto.FileJob fileJob = FileJobTransformer.toProtoFileJob(tmpFileJob);
+                Short jobType = tmpFileJob.getJobType();
                 ETLMessage etlMessage = new ETLMessage();
                 etlMessage.setBody(fileJob);
                 etlMessage.setHeader(new ETLMessageHeader());
@@ -75,10 +81,10 @@ public class DataJob implements Job {
                 }
                 handler.setMessage(etlMessage);
                 Client client = springContext.getBean(Client.class);
-                client.write(fileJob.getClientIP(), handler);
+                client.write(tmpFileJob.getClientIP(), handler);
             }
         } catch (Exception e) {
-            if (!notSupport){
+            if (!notSupport) {
                 try {
                     jobService.onFailed(executableJob, e.getMessage());
                 } catch (Exception e1) {
@@ -88,5 +94,4 @@ public class DataJob implements Job {
             logger.error("Execute job error: {}", e.getMessage(), e);
         }
     }
-
 }

@@ -17,12 +17,12 @@
                         connectionURL="jdbc:postgresql://192.168.33.67:3433/db_etl_server"/>
 
         <!-- 生成模型的包名和位置-->
+
         <javaModelGenerator targetPackage="cc.changic.platform.etl.base.model.db"
                             targetProject="F:\GitHub\etl\etl-base\src\main\java">
             <property name="enableSubPackages" value="false"/>
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>
-
         <!-- 生成映射文件的包名和位置-->
         <sqlMapGenerator targetPackage="mapper" targetProject="F:\GitHub\etl\etl-base\src\main\resources\"/>
 

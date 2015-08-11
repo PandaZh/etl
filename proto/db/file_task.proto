@@ -1,0 +1,18 @@
+option java_package = "cc.changic.platform.etl.base.model.db.proto";
+
+option java_outer_classname = "FileTaskProto";
+
+message FileTask {
+    required int32 id = 1;
+    required int32 appId = 2;
+    required string taskName = 3;
+    required int32 taskType = 4;
+    required int32 nextInterval = 5;
+    required string sourceDir = 6;
+    required string storageDir = 7;
+    required string fileName = 8;
+    optional string deleteInterval = 9;
+    optional int32 odsId = 10;
+    optional string insertSql = 11;
+    optional string deleteSql = 12;
+}

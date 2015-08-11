@@ -1,0 +1,29 @@
+option java_package = "cc.changic.platform.etl.protocol";
+
+option java_outer_classname = "FileJobProto";
+
+import "db/app.proto";
+import "db/config_version.proto";
+import "db/file_task.proto";
+import "db/gamezone.proto";
+import "db/job.proto";
+import "db/ods_config.proto";
+
+message FileJob {
+
+    optional string fileName = 1;
+    optional string sourceDir = 2;
+    optional string storageDir = 3;
+    // 全量拉取时文件的MD5值
+    optional string md5 = 4;
+    // 增量拉取时每次增量的字节数
+    optional int64 incrementalOffset = 5;
+
+    required App app = 6;
+    required GameZone gameZone = 7;
+    optional ODSConfig odsConfig = 8;
+    required FileTask fileTask = 9;
+    required Job job = 10;
+    required ConfigVersion version = 11;
+}
+

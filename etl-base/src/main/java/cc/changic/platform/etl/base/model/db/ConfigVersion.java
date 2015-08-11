@@ -6,7 +6,7 @@ import java.util.Date;
 public class ConfigVersion implements Serializable {
 
     private Integer id;
-    private Date modifyTime;
+    private String modifyTime;
     private Integer status;
 
     public Integer getId() {
@@ -17,11 +17,11 @@ public class ConfigVersion implements Serializable {
         this.id = id;
     }
 
-    public Date getModifyTime() {
+    public String getModifyTime() {
         return modifyTime;
     }
 
-    public void setModifyTime(Date modifyTime) {
+    public void setModifyTime(String modifyTime) {
         this.modifyTime = modifyTime;
     }
 

@@ -1,0 +1,10 @@
+option java_package = "cc.changic.platform.etl.base.model.db.proto";
+
+option java_outer_classname = "AppProto";
+
+message App {
+    required int32 appId = 1;
+    optional string appName = 2;
+    optional string dbUser = 3;
+    optional string dbPwd = 4;
+}

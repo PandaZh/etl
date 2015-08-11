@@ -20,6 +20,7 @@ import static cc.changic.platform.etl.base.util.LogFileUtil.getNextLogFileName;
  */
 public class ExecutableFileJob implements ExecutableJob, Serializable {
 
+
     // 构造函数数据
     private App app;
     private GameZone gameZone;
@@ -37,6 +38,14 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     // 增量拉取时每次增量的字节数
     private long incrementalOffset;
 
+    public void setSourceDir(String sourceDir) {
+        this.sourceDir = sourceDir;
+    }
+
+    public void setStorageDir(String storageDir) {
+        this.storageDir = storageDir;
+    }
+
     public ExecutableFileJob(App app, GameZone gameZone, FileTask fileTask, Job job, ODSConfig odsConfig, ConfigVersion version) {
         this.app = app;
         this.gameZone = gameZone;
@@ -48,17 +57,21 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
 
     @Override
     public int compareTo(ExecutableJob other) {
-        if (null == other)
-            return 1;
-        if (null == this.getNextTime())
-            return -1;
-        if (null == other.getNextTime())
-            return 1;
-        Calendar thisCalendar = Calendar.getInstance();
-        thisCalendar.setTime(this.getNextTime());
-        Calendar otherCalendar = Calendar.getInstance();
-        otherCalendar.setTime(other.getNextTime());
-        return thisCalendar.compareTo(otherCalendar);
+        try {
+            if (null == other)
+                return 1;
+            if (null == this.getNextTime())
+                return -1;
+            if (null == other.getNextTime())
+                return 1;
+            Calendar thisCalendar = Calendar.getInstance();
+            thisCalendar.setTime(this.getNextTime());
+            Calendar otherCalendar = Calendar.getInstance();
+            otherCalendar.setTime(other.getNextTime());
+            return thisCalendar.compareTo(otherCalendar);
+        } catch (ParseException e) {
+            throw new RuntimeException(e.getMessage(), e.getCause());
+        }
     }
 
     @Override
@@ -72,8 +85,11 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
     }
 
     @Override
-    public Date getNextTime() {
-        return null == getJob() ? null : getJob().getNextTime();
+    public Date getNextTime() throws ParseException {
+        if (null != getJob() && !Strings.isNullOrEmpty(getJob().getNextTime())) {
+            return TimeUtil.dateTime(getJob().getNextTime());
+        }
+        return null;
     }
 
     @Override
@@ -118,8 +134,7 @@ public class ExecutableFileJob implements ExecutableJob, Serializable {
 
     public String getFileName() throws ParseException {
         if (Strings.isNullOrEmpty(fileName)) {
-            LoggerFactory.getLogger("test").info("测试;;;;{},{},{},{}",getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), getJob().getLastRecordTimeStr());
-            fileName = getNextLogFileName(getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), TimeUtil.dateTime(getJob().getLastRecordTimeStr()));
+            fileName = getNextLogFileName(getFileTask().getFileName(), getJob(), getFileTask().getNextInterval(), TimeUtil.dateTime(getJob().getLastRecordTime()));
         }
         return fileName;
     }

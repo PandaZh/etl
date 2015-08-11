@@ -5,6 +5,7 @@ import cc.changic.platform.etl.base.model.db.ConfigVersion;
 import cc.changic.platform.etl.base.model.db.GameZoneKey;
 import cc.changic.platform.etl.base.model.db.Job;
 
+import java.text.ParseException;
 import java.util.Date;
 
 /**
@@ -20,7 +21,7 @@ public interface ExecutableJob extends Comparable<ExecutableJob> {
 
     Short getJobType();
 
-    Date getNextTime();
+    Date getNextTime() throws ParseException;
 
     Short getNextInterval();
 

@@ -48,7 +48,7 @@ public class FullFileJobServiceImpl extends JobService {
             job = fileJob.getJob();
             job.setStatus(ExecutableJob.SUCCESS);
             String fileName = new File(fileJob.getSourceDir(), fileJob.getFileName()).getAbsolutePath();
-            job.setModifyTime(new Date());
+            job.setModifyTime(TimeUtil.dateTime(new Date()));
             // 计算最后记录时间
             Date logTime;
             try {
@@ -59,18 +59,18 @@ public class FullFileJobServiceImpl extends JobService {
                 // return 确保不会影响到已存在的数据
                 return false;
             }
-            job.setLastRecordTime(logTime);
+            job.setLastRecordTime(TimeUtil.dateTime(logTime));
             // 计算下一次执行时间，如果本身NextTime不为空，依据NextTime计算，否则根据最后拉取时间计算
             Calendar calendar = Calendar.getInstance();
             if (null != job.getNextTime()) {
-                calendar.setTime(job.getNextTime());
+                calendar.setTime(TimeUtil.dateTime(job.getNextTime()));
             } else {
                 calendar.setTime(logTime);
             }
             calendar.set(Calendar.MINUTE, 0);
             calendar.add(Calendar.MINUTE, executableJob.getNextInterval() + random());
-            job.setNextTime(calendar.getTime());
-            String tmpDesc = "File=[" + fileName + "], desc=[" + desc + "], next_time=[" + TimeUtil.getISOTime(job.getNextTime()) + "], last_record_time=[" + TimeUtil.getISOTime(job.getLastRecordTime()) + "]";
+            job.setNextTime(TimeUtil.dateTime(calendar.getTime()));
+            String tmpDesc = "File=[" + fileName + "], desc=[" + desc + "], next_time=[" + job.getNextTime() + "], last_record_time=[" + job.getLastRecordTime() + "]";
             job.setOptionDesc(tmpDesc);
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, executableJob.getJobType());
@@ -95,12 +95,12 @@ public class FullFileJobServiceImpl extends JobService {
             job = executableJob.getJob();
             job.setStatus(ExecutableJob.FAILED);
             job.setOptionDesc(desc);
-            job.setModifyTime(new Date());
+            job.setModifyTime(TimeUtil.dateTime(new Date()));
             if (null == job.getNextTime()) {
-                job.setNextTime(TimeUtil.getLogSuffix(TimeUtil.getLogSuffix(new Date())));
+                job.setNextTime(TimeUtil.dateTime(TimeUtil.getLogSuffix(TimeUtil.getLogSuffix(new Date()))));
             }
             Calendar next = Calendar.getInstance();
-            next.setTime(job.getNextTime());
+            next.setTime(TimeUtil.dateTime(job.getNextTime()));
             Calendar now = Calendar.getInstance();
             now.add(Calendar.MINUTE, executableJob.getNextInterval());
             // 如果NextTime大于当前时间+时间间隔，那NextTime不需要再做运算
@@ -108,7 +108,7 @@ public class FullFileJobServiceImpl extends JobService {
                 next.set(Calendar.MINUTE, 0);
                 next.add(Calendar.MINUTE, executableJob.getNextInterval() + random());
             }
-            job.setNextTime(next.getTime());
+            job.setNextTime(TimeUtil.dateTime(next.getTime()));
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, executableJob.getJobType());
             logMapper.insert(jobLog);

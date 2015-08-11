@@ -45,15 +45,15 @@ public class IncrementalFileJobServiceImpl extends JobService {
             ExecutableFileJob fileJob = (ExecutableFileJob) executableJob;
             job = executableJob.getJob();
             job.setOptionDesc("SUCCESS: " + desc);
-            job.setModifyTime(new Date());
+            job.setModifyTime(TimeUtil.dateTime(new Date()));
             job.setLastRecordOffset(job.getLastRecordOffset() + fileJob.getIncrementalOffset());
             if (null == job.getNextTime()) {
-                job.setNextTime(new Date());
+                job.setNextTime(TimeUtil.dateTime(new Date()));
             }
             Calendar calendar = Calendar.getInstance();
-            calendar.setTime(job.getNextTime());
+            calendar.setTime(TimeUtil.dateTime(job.getNextTime()));
             calendar.add(Calendar.MINUTE, executableJob.getNextInterval());
-            job.setNextTime(calendar.getTime());
+            job.setNextTime(TimeUtil.dateTime(calendar.getTime()));
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, executableJob.getJobType());
             logMapper.insert(jobLog);
@@ -77,12 +77,12 @@ public class IncrementalFileJobServiceImpl extends JobService {
             job = executableJob.getJob();
             job.setStatus(ExecutableJob.FAILED);
             job.setOptionDesc(desc);
-            job.setModifyTime(new Date());
+            job.setModifyTime(TimeUtil.dateTime(new Date()));
             if (null == job.getNextTime()) {
-                job.setNextTime(TimeUtil.getLogSuffix(TimeUtil.getLogSuffix(new Date())));
+                job.setNextTime(TimeUtil.dateTime(TimeUtil.getLogSuffix(TimeUtil.getLogSuffix(new Date()))));
             }
             Calendar next = Calendar.getInstance();
-            next.setTime(job.getNextTime());
+            next.setTime(TimeUtil.dateTime(job.getNextTime()));
             Calendar now = Calendar.getInstance();
             now.add(Calendar.MINUTE, executableJob.getNextInterval());
             // 如果NextTime大于当前时间+时间间隔，那NextTime不需要再做运算
@@ -90,7 +90,7 @@ public class IncrementalFileJobServiceImpl extends JobService {
                 next.set(Calendar.MINUTE, 0);
                 next.add(Calendar.MINUTE, executableJob.getNextInterval() + random());
             }
-            job.setNextTime(next.getTime());
+            job.setNextTime(TimeUtil.dateTime(next.getTime()));
             jobMapper.updateByPrimaryKey(job);
             JobLog jobLog = buildLog(job, executableJob.getJobType());
             logMapper.insert(jobLog);

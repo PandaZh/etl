@@ -8,6 +8,8 @@ import cc.changic.platform.etl.base.util.MD5Checksum;
 import cc.changic.platform.etl.base.util.TimeUtil;
 import cc.changic.platform.etl.file.exec.ImportDataCmdExecutor;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
+import cc.changic.platform.etl.file.execute.FileJobTransformer;
+import cc.changic.platform.etl.protocol.FileJobProto;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
@@ -75,8 +77,8 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
         Assert.notNull(message, "ETL message is null");
         Assert.notNull(message.getHeader(), " ETL message's header is null");
         Assert.notNull(message.getBody(), "ETL message's body is null");
-        if (!(message.getBody() instanceof ExecutableFileJob))
-            throw new ClassCastException("ETL message's body is not instance of " + ExecutableFileJob.class);
+        if (!(message.getBody() instanceof FileJobProto.FileJob))
+            throw new ClassCastException("ETL message's body is not instance of " + FileJobProto.FileJob.class);
         this.message = message;
     }
 
@@ -98,18 +100,27 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
     }
 
     @Override
-    public void write(ChannelHandlerContext ctx) throws Exception {
-        ctx.writeAndFlush(this);
-    }
-
-    @Override
     public void read(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
+        if (null != message.getBody() && message.getBody() instanceof FileJobProto.FileJob) {
+            FileJobProto.FileJob protoJob = (FileJobProto.FileJob) message.getBody();
+            ExecutableFileJob fileJob = FileJobTransformer.toExecutableFileJob(protoJob);
+            message.setBody(fileJob);
+        }
         ETLMessageHeader header = message.getHeader();
         if (header.getMessageType() == REQUEST.type()) {
             doRequest(message);
         } else {
             doResponse(ctx, message);
         }
+    }
+
+    @Override
+    public void write(ChannelHandlerContext ctx) throws Exception {
+        if (null != message && null != message.getBody() && message.getBody() instanceof ExecutableFileJob) {
+            ExecutableFileJob executableFileJob = (ExecutableFileJob) message.getBody();
+            message.setBody(FileJobTransformer.toProtoFileJob(executableFileJob));
+        }
+        ctx.writeAndFlush(this);
     }
 
     private void doRequest(ETLMessage message) throws Exception {
@@ -159,7 +170,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
             // 计算源文件夹
             String sourceDir = fileJob.getSourceDir();
             logger.info("Calculating job source file: job_id={}, source_dir={}", fileJob.getJob().getId(), sourceDir);
-            if (null == fileJob.getJob().getLastRecordTime()) {
+            if (Strings.isNullOrEmpty(fileJob.getJob().getLastRecordTime())) {
                 // 最后记录时间为空时为第一次拉取，获取最老的文件
                 sourceFile = LogFileUtil.getOldestLogFile(sourceDir);
                 if (null == sourceFile) {
@@ -172,7 +183,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 sourceFile = new File(sourceDir, fileName);
                 // 服务器停机文件空档处理
                 if (!sourceFile.exists()) {
-                    Date lastRecordTime = fileJob.getJob().getLastRecordTime();
+                    Date lastRecordTime = TimeUtil.dateTime(fileJob.getJob().getLastRecordTime());
                     String baseName = LogFileUtil.getLogFileBaseName(sourceFile.getAbsolutePath());
                     if (!Strings.isNullOrEmpty(baseName)) {
                         File baseFile = new File(baseName);
@@ -227,13 +238,13 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                     if (tmpFile.exists()) {
                         boolean deleted = tmpFile.delete();
                         // 当文件存在，并且删除失败的时候，做错误处理，删除失败的原因可能是权限问题
-                        if (!deleted){
+                        if (!deleted) {
                             doError = true;
                             logger.error("Write file error: exists file but can not delete, file=[{}]", tmpFile.getAbsolutePath());
                             jobService.onFailed(reJob, "已存在文件:" + tmpFile.getAbsolutePath());
                             ctx.close();
                             return;
-                        }else{
+                        } else {
                             logger.info("Delete file on full file task response, file={}", tmpFile.getAbsolutePath());
                         }
                     }

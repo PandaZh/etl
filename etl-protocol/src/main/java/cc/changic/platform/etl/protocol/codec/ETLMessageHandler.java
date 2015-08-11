@@ -65,9 +65,9 @@ public class ETLMessageHandler extends SimpleChannelInboundHandler<ETLMessage> {
         ctx.close().sync();
         logger.error("Netty exception: {}", cause.getMessage(), cause);
         DuplexMessage handlerMessage = getHandlerMessage(ctx, null);
-        if (null != handlerMessage){
+        if (null != handlerMessage) {
             handlerMessage.handlerNettyException(cause.getMessage());
-        }else{
+        } else {
             logger.error("Caught netty exception, but no handler message found");
         }
     }

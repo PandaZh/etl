@@ -1,0 +1,9 @@
+option java_package = "cc.changic.platform.etl.base.model.db.proto";
+
+option java_outer_classname = "ConfigVersionProto";
+
+message ConfigVersion {
+    required int32 id = 1;
+    optional string modifyTime = 2;
+    optional int32 status = 3;
+}

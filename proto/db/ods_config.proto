@@ -1,0 +1,13 @@
+option java_package = "cc.changic.platform.etl.base.model.db.proto";
+
+option java_outer_classname = "ODSConfigProto";
+
+message ODSConfig {
+    required int32 id = 1;
+    required string odsName = 2;
+    required string odsIp = 3;
+    required int32 odsPort = 4;
+    required string odsSchema = 5;
+    required string odsUser = 6;
+    required string odsPwd = 7;
+}

@@ -6,6 +6,8 @@ import cc.changic.platform.etl.base.model.db.ODSConfig;
 import cc.changic.platform.etl.base.service.JobService;
 import cc.changic.platform.etl.base.util.LogFileUtil;
 import cc.changic.platform.etl.file.execute.ExecutableFileJob;
+import cc.changic.platform.etl.file.execute.FileJobTransformer;
+import cc.changic.platform.etl.protocol.FileJobProto;
 import cc.changic.platform.etl.protocol.anotation.MessageToken;
 import cc.changic.platform.etl.protocol.exception.ETLException;
 import cc.changic.platform.etl.protocol.message.DuplexMessage;
@@ -65,12 +67,26 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
 
     @Override
     public void read(ChannelHandlerContext ctx, ETLMessage message) throws Exception {
+        if (null != message.getBody() && message.getBody() instanceof FileJobProto.FileJob) {
+            FileJobProto.FileJob protoJob = (FileJobProto.FileJob) message.getBody();
+            ExecutableFileJob fileJob = FileJobTransformer.toExecutableFileJob(protoJob);
+            message.setBody(fileJob);
+        }
         ETLMessageHeader header = message.getHeader();
         if (header.getMessageType() == REQUEST.type()) {
             doRequest(message);
         } else {
             doResponse(ctx, message);
         }
+    }
+
+    @Override
+    public void write(ChannelHandlerContext ctx) throws Exception {
+        if (null != message && null != message.getBody() && message.getBody() instanceof ExecutableFileJob) {
+            ExecutableFileJob executableFileJob = (ExecutableFileJob) message.getBody();
+            message.setBody(FileJobTransformer.toProtoFileJob(executableFileJob));
+        }
+        ctx.writeAndFlush(this);
     }
 
     @Override
@@ -99,11 +115,6 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             logger.error("Get chunk file error:{}", e.getMessage(), e);
         }
         return chunkedFile;
-    }
-
-    @Override
-    public void write(ChannelHandlerContext ctx) throws Exception {
-        ctx.writeAndFlush(this);
     }
 
     private void doRequest(ETLMessage message) throws Exception {
@@ -249,7 +260,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                     }
                     statement.addBatch();
                 }
-                if (jobService.canUpdate(job)){
+                if (jobService.canUpdate(job)) {
                     statement.executeBatch();
                     jobService.onSuccess(job, "FileName=" + job.getSourceDir() + job.getFileName());
                 }
