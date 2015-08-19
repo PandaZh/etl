@@ -79,7 +79,7 @@ public class IncrementalFileJobServiceImpl extends JobService {
             job.setOptionDesc(desc);
             job.setModifyTime(TimeUtil.dateTime(new Date()));
             if (null == job.getNextTime()) {
-                job.setNextTime(TimeUtil.dateTime(TimeUtil.getLogSuffix(TimeUtil.getLogSuffix(new Date()))));
+                job.setNextTime(TimeUtil.getLogSuffix(new Date()));
             }
             Calendar next = Calendar.getInstance();
             next.setTime(TimeUtil.dateTime(job.getNextTime()));
