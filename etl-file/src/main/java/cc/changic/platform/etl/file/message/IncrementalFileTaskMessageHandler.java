@@ -33,12 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import static cc.changic.platform.etl.protocol.rmi.ETLMessageType.REQUEST;
 
@@ -183,7 +181,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 } else if (job.getJob().getStatus().equals(ExecutableJob.NO_DATA_CHANGE)) {
                     jobService.onSuccess(job, "No data change, FileName=" + job.getSourceDir() + job.getFileName());
                 } else {
-                    tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + System.currentTimeMillis());
+                    tmpFile = new File(job.getStorageDir(), "." + job.getFileName() + "." + UUID.randomUUID().toString().replaceAll("-", ""));
                     if (!tmpFile.getParentFile().exists())
                         Files.createParentDirs(tmpFile);
                     storageFile = new RandomAccessFile(tmpFile, "rw");
@@ -232,7 +230,7 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
         }
     }
 
-    private void doFinish() throws IOException {
+    private void doFinish() throws IOException, SQLException {
         storageFile.seek(0);
         List<String> datas = Lists.newArrayList();
         String data = storageFile.readLine();
@@ -251,12 +249,19 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
                 connection = DriverManager.getConnection(url, odsConfig.getOdsUser(), odsConfig.getOdsPwd());
                 statement = connection.prepareStatement(job.getFileTask().getInsertSql());
                 char split = 0x01;
+                int line = 0;
                 for (String data2 : datas) {
+                    line++;
                     Iterable<String> strings = Splitter.on(split).split(data2);
                     Iterator<String> iterator = strings.iterator();
                     int i = 1;
-                    while (iterator.hasNext()) {
-                        statement.setObject(i++, iterator.next());
+                    try {
+                        while (iterator.hasNext()) {
+                            statement.setObject(i++, iterator.next());
+                        }
+                    } catch (SQLException e) {
+                        logger.error("参数错误:[data={}, line={}]", data2, line);
+                        throw e;
                     }
                     statement.addBatch();
                 }
@@ -267,9 +272,23 @@ public class IncrementalFileTaskMessageHandler extends DuplexMessage {
             } catch (Exception e) {
                 logger.error("Insert error ,sql={}, desc={}", job.getFileTask().getInsertSql(), e.getMessage(), e);
                 jobService.onFailed(job, e.getMessage());
+                Throwable cause = e.getCause();
+                while (cause != null) {
+                    if (cause instanceof BatchUpdateException) {
+                        BatchUpdateException batchUpdateException = (BatchUpdateException) cause;
+                        logger.error("{}", cause.getMessage(), cause);
+                        throw batchUpdateException.getNextException();
+                    }
+                    cause = cause.getCause();
+                }
             } finally {
                 storageFile.close();
-//            tmpFile.deleteOnExit();
+                if (null != tmpFile && tmpFile.exists()) {
+                    boolean delete = tmpFile.delete();
+                    if (!delete) {
+                        logger.error("删除临时文件失败:[file={}]", tmpFile.getAbsolutePath());
+                    }
+                }
                 try {
                     if (null != statement)
                         statement.close();

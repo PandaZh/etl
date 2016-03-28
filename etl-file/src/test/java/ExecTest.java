@@ -1,9 +1,13 @@
+import cc.changic.platform.etl.base.model.db.ODSConfig;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.commons.exec.*;
 import org.junit.Test;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
@@ -102,4 +106,18 @@ public class ExecTest {
         }
     }
 
+
+    @Test
+    public void jdbcTest(){
+        try {
+            Class.forName("org.postgresql.Driver");
+            String url = "jdbc:postgresql://192.168.33.64:5432/db_game_data" ;
+           Connection connection = DriverManager.getConnection(url, "g_user", "123456");
+            System.out.println(connection);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

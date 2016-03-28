@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+
+<resultset statement="select * from t_system_variables" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <row>
+        <field name="identity">1</field>
+        <field name="tokenName">game.spi.domainRoot</field>
+        <field name="tokenValue">${domain_url}</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description">接口域名</field>
+        <field name="modifyTime">2014-10-24 15:17:51</field>
+    </row>
+
+    <row>
+        <field name="identity">197</field>
+        <field name="tokenName">ccu.jdbc.url</field>
+        <field name="tokenValue">jdbc:mysql://${dbServer.intranetip}:${dbServer.db_port}/db_gms_${site}?characterEncoding=utf8&amp;autoReconnect=true</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2014-10-24 15:18:51</field>
+    </row>
+
+    <row>
+        <field name="identity">198</field>
+        <field name="tokenName">ccu.jdbc.user</field>
+        <field name="tokenValue">c_${site}</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2014-08-14 10:58:55</field>
+    </row>
+
+    <row>
+        <field name="identity">200</field>
+        <field name="tokenName">copydb.jdbc.url</field>
+        <field name="tokenValue">jdbc:mysql://192.168.33.68:2433/db_gccp_sdk_test_0001?characterEncoding=utf8&amp;autoReconnect=true</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-09-19 11:35:41</field>
+    </row>
+
+    <row>
+        <field name="identity">201</field>
+        <field name="tokenName">copydb.jdbc.user</field>
+        <field name="tokenValue">pg_user</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-09-19 11:26:40</field>
+    </row>
+
+    <row>
+        <field name="identity">199</field>
+        <field name="tokenName">ccu.jdbc.password</field>
+        <field name="tokenValue">chang%ic_ccu7Q</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2014-08-14 11:02:02</field>
+    </row>
+
+    <row>
+        <field name="identity">202</field>
+        <field name="tokenName">copydb.jdbc.password</field>
+        <field name="tokenValue">qqdba_changic@123</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-09-19 11:27:38</field>
+    </row>
+
+    <row>
+        <field name="identity">203</field>
+        <field name="tokenName">sdk_v2.jdbc.url</field>
+        <field name="tokenValue">jdbc:mysql://119.147.250.170:2433/db_platform_v2_test_test?characterEncoding=utf8&amp;autoReconnect=true</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-07-22 20:04:53</field>
+    </row>
+
+    <row>
+        <field name="identity">204</field>
+        <field name="tokenName">sdk_v2.jdbc.user</field>
+        <field name="tokenValue">changic_read</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-04-24 16:59:19</field>
+    </row>
+
+    <row>
+        <field name="identity">205</field>
+        <field name="tokenName">sdk_v2.jdbc.password</field>
+        <field name="tokenValue">qqdba_read</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-04-24 16:59:23</field>
+    </row>
+
+    <row>
+        <field name="identity">156</field>
+        <field name="tokenName">DataQuery.ExecuteSqlWaitTime</field>
+        <field name="tokenValue">240000</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description">数据查询超时时间</field>
+        <field name="modifyTime">2014-07-19 11:01:08</field>
+    </row>
+
+    <row>
+        <field name="identity">206</field>
+        <field name="tokenName">game.spi.sdk.gameorder.shenghuo</field>
+        <field name="tokenValue">http://shyx-web-sg.pocketgamesol.com/sdk/gameOrderIdByPf/pocket</field>
+        <field name="tokenType">GAME_SPI</field>
+        <field name="description">攻城掠地玩家信息接口</field>
+        <field name="modifyTime">2015-04-28 10:18:55</field>
+    </row>
+
+    <row>
+        <field name="identity">207</field>
+        <field name="tokenName">game.spi.gcld.order</field>
+        <field name="tokenValue">/root/yxVietnamGetOrderId.action</field>
+        <field name="tokenType">GAME_SPI</field>
+        <field name="description">攻城掠地生成订单接口</field>
+        <field name="modifyTime">2014-11-11 15:57:24</field>
+    </row>
+
+    <row>
+        <field name="identity">208</field>
+        <field name="tokenName">game.spi.agent.sign.key.23</field>
+        <field name="tokenValue">thailand</field>
+        <field name="tokenType">GAME_SPI</field>
+        <field name="description">泰国攻城掠地运营商标志</field>
+        <field name="modifyTime">2014-11-11 18:33:26</field>
+    </row>
+
+    <row>
+        <field name="identity">209</field>
+        <field name="tokenName">game.spi.agent.sign.key.13</field>
+        <field name="tokenValue">qianqi</field>
+        <field name="tokenType">GAME_SPI</field>
+        <field name="description">越南攻城掠地运营商标志</field>
+        <field name="modifyTime">2014-11-11 18:33:30</field>
+    </row>
+
+    <row>
+        <field name="identity">210</field>
+        <field name="tokenName">gamedb.jdbc.url</field>
+        <field name="tokenValue">jdbc:mysql://119.147.250.170:2433/db_platform_v1_test?characterEncoding=utf8&amp;autoReconnect=true</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-07-22 20:04:49</field>
+    </row>
+
+    <row>
+        <field name="identity">212</field>
+        <field name="tokenName">gamedb.jdbc.password</field>
+        <field name="tokenValue">qqdba_read</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-05-30 14:40:06</field>
+    </row>
+
+    <row>
+        <field name="identity">211</field>
+        <field name="tokenName">gamedb.jdbc.user</field>
+        <field name="tokenValue">changic_read</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description"></field>
+        <field name="modifyTime">2015-05-30 14:39:58</field>
+    </row>
+
+    <row>
+        <field name="identity">127</field>
+        <field name="tokenName">martdb.jdbc.user</field>
+        <field name="tokenValue">g_user</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description">martdb.jdbc.user</field>
+        <field name="modifyTime">2015-09-18 20:05:56</field>
+    </row>
+
+    <row>
+        <field name="identity">128</field>
+        <field name="tokenName">martdb.jdbc.url</field>
+        <field name="tokenValue">jdbc:postgresql://192.168.33.64:5432/db_game_data</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description">martdb.jdbc.url</field>
+        <field name="modifyTime">2015-09-18 20:06:00</field>
+    </row>
+
+    <row>
+        <field name="identity">129</field>
+        <field name="tokenName">martdb.jdbc.password</field>
+        <field name="tokenValue">123456</field>
+        <field name="tokenType">COMMON</field>
+        <field name="description">martdb.jdbc.password</field>
+        <field name="modifyTime">2012-06-05 11:38:58</field>
+    </row>
+</resultset>

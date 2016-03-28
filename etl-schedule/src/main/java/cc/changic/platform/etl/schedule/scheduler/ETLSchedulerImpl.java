@@ -151,9 +151,13 @@ public class ETLSchedulerImpl implements ETLScheduler {
         String taskTable = job.getTaskTable();
         ExecutableFileJob executableJob = null;
         if (taskTable.equals(FileTask.class.getAnnotation(TaskTable.class).tableName())) {
-            executableJob = ExecutableJobUtil.buildFileJob(cache, job, configVersion);
-            jobs.offer(executableJob);
-            logger.info("Add job to queue={}, job={}", gameZoneKey, executableJob.toString());
+            try {
+                executableJob = ExecutableJobUtil.buildFileJob(cache, job, configVersion);
+                jobs.offer(executableJob);
+                logger.info("Add job to queue={}, job={}", gameZoneKey, executableJob.toString());
+            } catch (Exception e) {
+                logger.error("{}", e.getMessage(), e);
+            }
         } else {
             logger.warn("Not support task_table={} and job_id={}", job.getTaskTable(), job.getId());
         }

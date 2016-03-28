@@ -105,8 +105,31 @@ public abstract class JobService {
      * PS:可加载配置的时间最好设为8~10分钟
      */
     protected final int random() {
-        int tensDigit = (int) (Math.random() * 6);
-        int singleDigit = (int) (Math.random() * 6);
-        return tensDigit * 10 + singleDigit;
+//        int tensDigit = (int) (Math.random() * 6);
+//        int singleDigit = (int) (Math.random() * 6);
+//        return tensDigit * 10 + singleDigit;
+        while (true){
+            int random = (int) (Math.random() * 9);
+            if (random < 2)
+                continue;
+            return random;
+        }
+    }
+
+    public static void main(String[] args) {
+        JobService jobService = new JobService() {
+            @Override
+            protected boolean onJobSuccess(ExecutableJob executableJob, String desc) {
+                return false;
+            }
+
+            @Override
+            protected boolean onJobFailed(ExecutableJob executableJob, String desc) {
+                return false;
+            }
+        };
+        for(int i=0;i<100;i++){
+            System.out.println(jobService.random());
+        }
     }
 }

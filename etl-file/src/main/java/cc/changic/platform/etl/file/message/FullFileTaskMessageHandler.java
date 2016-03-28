@@ -333,7 +333,7 @@ public class FullFileTaskMessageHandler extends DuplexMessage {
                 try {
                     storageFile.close();
                 } catch (IOException e) {
-                    logger.error("关闭文件流异常:file={},{}", targetFile.getAbsolutePath(), e.getMessage(), e);
+                    logger.error("关闭文件流异常:{}", e.getMessage(), e);
                 }
             }
         }
